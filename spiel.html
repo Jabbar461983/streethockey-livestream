@@ -33,6 +33,10 @@ body{
 @keyframes pulse{0%{opacity:1}50%{opacity:.25}100%{opacity:1}}
 .status-label{font-weight:800;letter-spacing:1px;font-size:13px;color:var(--live);text-transform:uppercase}
 .score-row{display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:6px}
+.team-block{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px}
+.avatar-wrap{width:56px;height:56px;border-radius:50%;overflow:hidden;flex-shrink:0;position:relative;background:rgba(255,255,255,.06)}
+.avatar-wrap img{width:100%;height:100%;object-fit:contain;display:none}
+.avatar-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;letter-spacing:.5px;color:var(--muted)}
 .team{font-weight:700;font-size:19px;text-align:center;flex:1}
 .res{font-size:38px;font-weight:800;color:var(--text);white-space:nowrap}
 .meta{text-align:center;font-size:13px;color:var(--muted);margin-bottom:22px}
@@ -66,6 +70,59 @@ var seasonId = params.get("saisonid");
 var content = document.getElementById("content");
 
 var WHISTLE = '<svg class="wh" width="15" height="15" viewBox="0 0 24 24"><circle cx="8" cy="12" r="6" fill="none" stroke="#f0f2f5" stroke-width="2"/><circle cx="8" cy="12" r="2" fill="#f0f2f5"/><rect x="13" y="10" width="8" height="4" rx="2" fill="#f0f2f5"/></svg>';
+
+// Verein pro Team-Name (für Logo-Dateinamen: logos/<VEREIN>.png)
+// Alle Mannschaften desselben Vereins (1., 2., Damen, U18, U15, U12, U9 ...)
+// nutzen automatisch dieselbe Logo-Datei.
+var TEAM_CLUB = {
+  "SHC Fribourg Dragons":"fribourg-dragons",
+  "Horgenberg Hammers 1":"horgenberg","Horgenberg Hammers 2":"horgenberg","Horgenberg Hammers Damen":"horgenberg",
+  "Horgenberg Hammers U18":"horgenberg","Horgenberg Hämmerlis U9":"horgenberg","Horgenberg Hammers U15":"horgenberg","Horgenberg Hammers U12":"horgenberg",
+  "Oberwil Rebells 1":"oberwil","Oberwil Rebells 2":"oberwil","Oberwil Rebells U18":"oberwil",
+  "Oberwil Rebells U15":"oberwil","Oberwil Rebells U12":"oberwil","Oberwil Rebells U9":"oberwil",
+  "SHC Aegerten-Brügg 1":"aegerten-bruegg","SHC Aegerten-Brügg U15":"aegerten-bruegg","SHC Aegerten-Brügg U12":"aegerten-bruegg","SHC Aegerten-Brügg U9":"aegerten-bruegg",
+  "SHC Belpa 1107 1":"belpa","SHC Belpa 1107 2":"belpa","SHC Belpa 1107 Damen":"belpa","SHC Belpa 1107 U18":"belpa","SHC Belpa 1107 U15":"belpa",
+  "SHC Berner Oberland 1":"berner-oberland",
+  "SHC Bettlach 1":"bettlach","SHC Bettlach 2":"bettlach","SHC Bettlach - Seetal Damen":"bettlach",
+  "SHC Bettlach U18":"bettlach","SHC Bettlach U15":"bettlach","SHC Bettlach U12":"bettlach","SHC Bettlach U9":"bettlach",
+  "SHC Bonstetten-Wettswil 1":"bonstetten-wettswil","SHC Bonstetten-Wettswil 2":"bonstetten-wettswil","SHC Bonstetten-Wettswil U18":"bonstetten-wettswil",
+  "SHC Bonstetten-Wettswil U9":"bonstetten-wettswil","SHC Bonstetten-Wettswil U12":"bonstetten-wettswil","SHC Bonstetten-Wettswil U15":"bonstetten-wettswil",
+  "SHC Bulldozers Kernenried-Zauggenried 1":"kernenried","SHC Bulldozers Kernenried-Zauggenried 2":"kernenried",
+  "SHC Bulldozers Kernenried-Zauggenried Damen":"kernenried","SHC Bulldozers Kernenried-Zauggenried U18":"kernenried",
+  "SHC Bulldozers Kernenried-Zauggenried U15":"kernenried","SHC Bulldozers Kernenried-Zauggenried U9 weiss":"kernenried",
+  "SHC Bulldozers Kernenried-Zauggenried U12":"kernenried","SHC Bulldozers Kernenried-Zauggenried U9 schwarz":"kernenried",
+  "SHC Diabla 1":"diabla","SHC Valais U9":"diabla","SHC Valais Femmes":"diabla","SHC Valais U12":"diabla",
+  "SHC Erlinsbach 1":"erlinsbach","SHC Erlinsbach U12":"erlinsbach","SHC Erlinsbach U15":"erlinsbach","SHC Erlinsbach U9":"erlinsbach",
+  "SHC Grenchen-Limpachtal 1":"grenchen-limpachtal","SHC Grenchen-Limpachtal 2":"grenchen-limpachtal","SHC Grenchen-Limpachtal Damen":"grenchen-limpachtal",
+  "SHC Grenchen-Limpachtal 3":"grenchen-limpachtal","SHC Grenchen-Limpachtal U18":"grenchen-limpachtal",
+  "SHC Grenchen-Limpachtal U15 GF Grün":"grenchen-limpachtal","SHC Grenchen-Limpachtal U15 GF Weiss":"grenchen-limpachtal",
+  "SHC Grenchen-Limpachtal U12 GF":"grenchen-limpachtal","SHC Grenchen-Limpachtal U9":"grenchen-limpachtal",
+  "SHC La Chaux-de-Fonds 1":"la-chaux-de-fonds","SHC La Chaux-de-Fonds 2":"la-chaux-de-fonds","SHC La Chaux-de-Fonds Damen":"la-chaux-de-fonds",
+  "SHC La Chaux-de-Fonds U18":"la-chaux-de-fonds","SHC La Chaux-de-Fonds U15":"la-chaux-de-fonds","SHC La Chaux-de-Fonds U12":"la-chaux-de-fonds",
+  "SHC Langenthal Devils 1":"langenthal-devils",
+  "SHC Martigny 1":"martigny","SHC Martigny 2":"martigny","SHC Martigny U18":"martigny","SHC Martigny U15":"martigny","SHC Martigny U12":"martigny",
+  "SHC Seetal Admirals 1":"seetal-admirals","SHC Seetal Admirals 2":"seetal-admirals",
+  "SHC Steckholz":"steckholz","SHC Wild Sharks":"wild-sharks",
+  "Sierre Lions 1":"sierre","Sierre Lions 2":"sierre","Sierre Lions U18":"sierre",
+  "SV Gals 1":"gals","SV Gals U12":"gals","SV Gals U9":"gals","SV Gals U15":"gals"
+};
+
+function kuerzelFor(teamName) {
+  return teamName.replace(/^(SHC|SV|HC)\s+/, "").substring(0, 3).toUpperCase();
+}
+function clubSlugFor(teamName) {
+  if (TEAM_CLUB[teamName]) return TEAM_CLUB[teamName];
+  return teamName.replace(/^(SHC|SV|HC)\s+/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+function renderAvatar(teamName) {
+  var initials = kuerzelFor(teamName);
+  var slug = clubSlugFor(teamName);
+  return '<div class="avatar-wrap"><div class="avatar-fallback">' + initials + '</div>' +
+    '<img src="logos/' + slug + '.png" alt="" ' +
+    'onload="this.style.display=\'block\';this.previousElementSibling.style.display=\'none\'" ' +
+    'onerror="this.remove()"></div>';
+}
 
 function text(node, tag) {
   var el = node.getElementsByTagName(tag)[0];
@@ -143,9 +200,9 @@ function render(d) {
     ? '<div class="top"><span class="status-label">Spiel beendet</span></div>'
     : '<div class="top"><span class="dot"></span><span class="status-label">Live</span></div>';
 
-  html += '<div class="score-row"><div class="team">' + home + '</div>' +
+  html += '<div class="score-row"><div class="team-block">' + renderAvatar(home) + '<div class="team">' + home + '</div></div>' +
     '<div class="res">' + text(d, "spieltoreheim") + ' : ' + text(d, "spieltoregast") + '</div>' +
-    '<div class="team">' + away + '</div></div>';
+    '<div class="team-block">' + renderAvatar(away) + '<div class="team">' + away + '</div></div></div>';
   html += '<div class="meta">' + text(d, "spieldatum") + ' · ' + text(d, "spielzeit") + ' Uhr · ' + text(d, "spielort") + '</div>';
   html += '<h2>Liveticker · Stand ' + updated + ' Uhr</h2>' + tickerHtml;
   html += '<h2>Aufstellungen</h2><div class="lineups">';
