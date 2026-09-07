@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Spiele – Swiss Streethockey</title>
+<style>
+:root{
+  --bg:#0e1117;
+  --card:#161b22;
+  --border:rgba(255,255,255,.08);
+  --text:#f0f2f5;
+  --muted:rgba(240,242,245,.55);
+  --accent:#3ea6ff;
+  --goal:#ff8c00;
+  --live:#ff4d4f;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  padding:24px 16px 60px;
+}
+header{max-width:1100px;margin:0 auto 28px}
+h1{font-size:26px;font-weight:800;margin:0 0 4px;letter-spacing:-.5px}
+.subtitle{color:var(--muted);font-size:14px}
+.grid{
+  max-width:1100px;margin:0 auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:16px;
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:16px 18px;
+  transition:transform .15s ease, border-color .15s ease;
+}
+.card:hover{transform:translateY(-2px);border-color:rgba(62,166,255,.4)}
+.league{
+  font-size:11px;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--accent);font-weight:700;margin-bottom:8px;
+}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--live);animation:pulse 1.4s infinite}
+@keyframes pulse{0%{opacity:1}50%{opacity:.25}100%{opacity:1}}
+.live-label{font-size:12px;font-weight:800;letter-spacing:1px;color:var(--live);text-transform:uppercase}
+.updated{margin-left:auto;font-size:11px;color:var(--muted)}
+.score-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:8px}
+.team{flex:1;font-weight:600;font-size:14px;text-align:center}
+.res{
+  font-size:24px;font-weight:800;color:var(--text);
+  text-decoration:none;white-space:nowrap;
+}
+.res:hover{color:var(--accent)}
+.meta{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:10px}
+.pin{width:11px;height:11px;flex-shrink:0}
+.ticker{border-top:1px solid var(--border);padding-top:8px}
+.ev{font-size:13px;margin-bottom:6px;display:flex;align-items:flex-start;gap:6px;color:rgba(240,242,245,.85)}
+.ev b{min-width:34px;color:var(--muted);font-weight:600}
+.ball{width:9px;height:9px;border-radius:50%;background:var(--goal);flex-shrink:0;margin-top:4px}
+.wh{flex-shrink:0;margin-top:1px}
+.empty{
+  max-width:1100px;margin:60px auto;text-align:center;color:var(--muted);font-size:15px;
+}
+footer{max-width:1100px;margin:40px auto 0;text-align:center;font-size:12px;color:var(--muted)}
+footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Live Spiele</h1>
+  <div class="subtitle" id="subtitle">Wird geladen …</div>
+</header>
+<div class="grid" id="grid"></div>
+
+<footer>Daten: <a href="https://www.swiss-streethockey.ch" target="_blank" rel="noopener">Swiss Streethockey</a> · Aktualisiert sich automatisch alle 60 Sekunden</footer>
+
+<script>
+(function(){
+// ============================================================
+// KONFIGURATION
+// ============================================================
+
+// Basis-URL des Cloudflare Workers (Proxy zu liga.ssha.ch)
+var WORKER = "https://crimson-shadow-9fa2.ch-nessier.workers.dev";
+
+// Alle Ligen/Divisionen des Verbandes (id, Typ, Anzeigename)
+var LEAGUES = [
+  {id:292,  type:"liga",     name:"National League"},
+  {id:300,  type:"liga",     name:"Swiss Cup"},
+  {id:291,  type:"liga",     name:"Challenge League"},
+  {id:2104, type:"division", name:"Classic League 2 – Ost"},
+  {id:2105, type:"division", name:"Classic League 2 – West"},
+  {id:295,  type:"liga",     name:"Damen"},
+  {id:296,  type:"liga",     name:"U18"},
+  {id:302,  type:"liga",     name:"Cup U15"},
+  {id:2109, type:"division", name:"U15 – Grossfeld"},
+  {id:2108, type:"division", name:"U15 – Kleinfeld"},
+  {id:301,  type:"liga",     name:"Cup U12"},
+  {id:2110, type:"division", name:"U12 – Grossfeld"},
+  {id:2111, type:"division", name:"U12 – Kleinfeld"},
+  {id:2113, type:"division", name:"U9 – Region A"},
+  {id:2112, type:"division", name:"U9 – Region B"}
+];
+
+// Wie oft neu geladen wird (Sekunden)
+var REFRESH_SECONDS = 60;
+
+// ============================================================
+// Ab hier keine Anpassungen nötig
+// ============================================================
+
+var grid = document.getElementById("grid");
+var subtitle = document.getElementById("subtitle");
+
+var PIN = '<svg class="pin" viewBox="0 0 24 24"><path fill="#3ea6ff" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>';
+var WHISTLE = '<svg class="wh" width="14" height="14" viewBox="0 0 24 24"><circle cx="8" cy="12" r="6" fill="none" stroke="#f0f2f5" stroke-width="2"/><circle cx="8" cy="12" r="2" fill="#f0f2f5"/><rect x="13" y="10" width="8" height="4" rx="2" fill="#f0f2f5"/></svg>';
+
+function text(node, tag) {
+  var el = node.getElementsByTagName(tag)[0];
+  return el ? el.textContent.trim() : "";
+}
+
+function directChild(parent, tagName) {
+  if (!parent) return null;
+  for (var i = 0; i < parent.children.length; i++) {
+    if (parent.children[i].tagName === tagName) return parent.children[i];
+  }
+  return null;
+}
+
+function todayGerman() {
+  var d = new Date();
+  var pad = function(n) { return (n < 10 ? "0" : "") + n; };
+  return pad(d.getDate()) + "." + pad(d.getMonth() + 1) + "." + d.getFullYear();
+}
+
+function fetchXml(url) {
+  return fetch(url).then(function(r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.text();
+  }).then(function(text) {
+    var doc = new DOMParser().parseFromString(text, "application/xml");
+    if (doc.getElementsByTagName("parsererror").length) throw new Error("XML parse error");
+    return doc;
+  });
+}
+
+function getCurrentSeasonId() {
+  return fetchXml(WORKER + "/?path=xml/configuration.aspx&id=0&_=" + Date.now()).then(function(cfg) {
+    var seasons = Array.prototype.slice.call(cfg.getElementsByTagName("saison"));
+    var current = seasons.filter(function(s) { return text(s, "iscurrent") === "True"; })[0];
+    return current ? text(current, "id") : "";
+  });
+}
+
+// Findet alle heutigen Spiele mit aktivem Liveticker, für jede Liga
+function findCandidates() {
+  var today = todayGerman();
+  return Promise.all(LEAGUES.map(function(league) {
+    var url = WORKER + "/?path=xml/spielplan.aspx&id=" + league.id + "&typ=" + league.type + "&list=open";
+    return fetchXml(url).then(function(doc) {
+      return Array.prototype.slice.call(doc.getElementsByTagName("Spiel"))
+        .filter(function(spiel) {
+          return text(spiel, "datum").indexOf(today) === 0 && text(spiel, "livetickeron") === "1";
+        })
+        .map(function(spiel) {
+          return { spielnr: text(spiel, "spielnr"), league: league };
+        });
+    }).catch(function() { return []; });
+  })).then(function(lists) {
+    return [].concat.apply([], lists);
+  });
+}
+
+// Prüft ein Kandidaten-Spiel: wirklich live? (gestartet, aber nicht beendet)
+function checkLive(candidate, seasonId) {
+  var url = WORKER + "/?path=xml/liveticker.aspx&spielnr=" + candidate.spielnr + "&saisonid=" + seasonId + "&_=" + Date.now();
+  return fetchXml(url).then(function(doc) {
+    var started = text(doc, "spielbeginn");
+    var ended = text(doc, "spielende");
+    if (started && !ended) {
+      return { doc: doc, league: candidate.league, seasonId: seasonId };
+    }
+    return null;
+  }).catch(function() { return null; });
+}
+
+// --- Ticker-Ereignis erkennen und formatieren (Tor / Strafe / Sonstiges) ---
+function parseEvent(rawText) {
+  var goalMatch = rawText.match(/^Tor für (.+?) durch (.+?)(?: auf Pass von (.+?))?\.\s*Neuer Spielstand (\d+:\d+)/);
+  if (goalMatch) {
+    return { type: "goal", team: goalMatch[1], scorer: goalMatch[2], assists: goalMatch[3], score: goalMatch[4] };
+  }
+  var penaltyMatch1 = rawText.match(/^(\d+)\s*Minutenstrafe für (.+?)\s*\((.+?)\)/);
+  if (penaltyMatch1) {
+    return { type: "penalty", minutes: penaltyMatch1[1] + " Min.", player: penaltyMatch1[2], team: penaltyMatch1[3] };
+  }
+  var penaltyMatch2 = rawText.match(/^Bankstrafen? gegen (.+?)\.\s*Die Strafe wird abgesessen von (.+)/);
+  if (penaltyMatch2) {
+    return { type: "penalty", minutes: "", player: penaltyMatch2[2], team: penaltyMatch2[1] };
+  }
+  return { type: "other", text: rawText };
+}
+
+function renderEvent(time, rawText) {
+  var e = parseEvent(rawText);
+  if (e.type === "goal") {
+    var sub = e.scorer + (e.assists ? " – " + e.assists.replace(" und ", " / ") : "");
+    return '<div class="ev"><b>' + time + '</b><span class="ball"></span><div>' + e.score + ' ' + e.team + '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + sub + '</div></div></div>';
+  }
+  if (e.type === "penalty") {
+    return '<div class="ev"><b>' + time + '</b>' + WHISTLE + '<div>' + e.team + (e.minutes ? ' · ' + e.minutes : '') + ' / ' + e.player + '</div></div>';
+  }
+  return '<div class="ev"><b>' + time + '</b><div>' + rawText + '</div></div>';
+}
+
+function renderCard(game) {
+  var d = game.doc;
+  var home = text(d, "spielheimTeamShort");
+  var away = text(d, "spielgastTeamShort");
+  var allMessages = Array.prototype.slice.call(d.getElementsByTagName("message")).reverse();
+  var visible = allMessages.slice(0, 3);
+  var tickerHtml = visible.map(function(m) { return renderEvent(text(m, "spielzeit"), text(m, "text")); }).join("");
+  var updated = text(d, "last_updated").split(" ")[1] || "";
+  var detailUrl = "spiel.html?spielnr=" + text(d, "spielnr") + "&saisonid=" + game.seasonId;
+
+  return '<div class="card">' +
+    '<div class="league">' + game.league.name + '</div>' +
+    '<div class="top"><span class="dot"></span><span class="live-label">Live</span><span class="updated">' + updated + ' Uhr</span></div>' +
+    '<div class="score-row"><div class="team">' + home + '</div>' +
+    '<a class="res" href="' + detailUrl + '">' + text(d, "spieltoreheim") + ' : ' + text(d, "spieltoregast") + '</a>' +
+    '<div class="team">' + away + '</div></div>' +
+    '<div class="meta">' + PIN + ' ' + text(d, "spielort") + '</div>' +
+    (tickerHtml ? '<div class="ticker">' + tickerHtml + '</div>' : '') +
+    '</div>';
+}
+
+function run() {
+  getCurrentSeasonId().then(function(seasonId) {
+    if (!seasonId) {
+      subtitle.textContent = "Saison konnte nicht ermittelt werden.";
+      return;
+    }
+    findCandidates().then(function(candidates) {
+      if (!candidates.length) {
+        subtitle.textContent = "Aktuell läuft kein Spiel.";
+        grid.innerHTML = "";
+        return;
+      }
+      Promise.all(candidates.map(function(c) { return checkLive(c, seasonId); })).then(function(results) {
+        var liveGames = results.filter(function(g) { return g; });
+        if (!liveGames.length) {
+          subtitle.textContent = "Aktuell läuft kein Spiel.";
+          grid.innerHTML = "";
+          return;
+        }
+        subtitle.textContent = liveGames.length + " Spiel" + (liveGames.length > 1 ? "e" : "") + " laufen gerade";
+        grid.innerHTML = liveGames.map(renderCard).join("");
+      });
+    });
+  });
+}
+
+run();
+setInterval(run, REFRESH_SECONDS * 1000);
+})();
+</script>
+</body>
+</html>

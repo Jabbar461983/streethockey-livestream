@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spieldetails – Swiss Streethockey</title>
+<style>
+:root{
+  --bg:#0e1117;
+  --card:#161b22;
+  --border:rgba(255,255,255,.08);
+  --text:#f0f2f5;
+  --muted:rgba(240,242,245,.55);
+  --accent:#3ea6ff;
+  --goal:#ff8c00;
+  --live:#ff4d4f;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  padding:24px 16px 60px;
+}
+.wrap{max-width:760px;margin:0 auto}
+.back{display:inline-block;color:var(--accent);text-decoration:none;font-size:14px;margin-bottom:20px}
+.back:hover{text-decoration:underline}
+.status{color:var(--muted);font-style:italic}
+.error{color:#e0b400}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--live);animation:pulse 1.4s infinite}
+@keyframes pulse{0%{opacity:1}50%{opacity:.25}100%{opacity:1}}
+.status-label{font-weight:800;letter-spacing:1px;font-size:13px;color:var(--live);text-transform:uppercase}
+.score-row{display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:6px}
+.team{font-weight:700;font-size:19px;text-align:center;flex:1}
+.res{font-size:38px;font-weight:800;color:var(--text);white-space:nowrap}
+.meta{text-align:center;font-size:13px;color:var(--muted);margin-bottom:22px}
+h2{
+  font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:1px;
+  color:var(--accent);border-bottom:2px solid rgba(62,166,255,.3);padding-bottom:6px;margin:24px 0 12px;
+}
+.ev{font-size:14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:8px}
+.ev b{min-width:40px;color:var(--muted);font-weight:600}
+.ball{width:10px;height:10px;border-radius:50%;background:var(--goal);flex-shrink:0;margin-top:5px}
+.wh{flex-shrink:0;margin-top:2px}
+.sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+.lineups{display:flex;gap:28px;flex-wrap:wrap}
+.col{flex:1;min-width:230px}
+.subhead{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:12px 0 5px}
+.player{font-size:14px;margin-bottom:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← Zurück zur Übersicht</a>
+  <div id="content"><p class="status">Spiel wird geladen …</p></div>
+</div>
+
+<script>
+(function(){
+var WORKER = "https://crimson-shadow-9fa2.ch-nessier.workers.dev";
+var params = new URLSearchParams(location.search);
+var spielnr = params.get("spielnr");
+var seasonId = params.get("saisonid");
+var content = document.getElementById("content");
+
+var WHISTLE = '<svg class="wh" width="15" height="15" viewBox="0 0 24 24"><circle cx="8" cy="12" r="6" fill="none" stroke="#f0f2f5" stroke-width="2"/><circle cx="8" cy="12" r="2" fill="#f0f2f5"/><rect x="13" y="10" width="8" height="4" rx="2" fill="#f0f2f5"/></svg>';
+
+function text(node, tag) {
+  var el = node.getElementsByTagName(tag)[0];
+  return el ? el.textContent.trim() : "";
+}
+
+function directChild(parent, tagName) {
+  if (!parent) return null;
+  for (var i = 0; i < parent.children.length; i++) {
+    if (parent.children[i].tagName === tagName) return parent.children[i];
+  }
+  return null;
+}
+
+function renderPlayerList(container, title, showNumber) {
+  if (!container) return "";
+  var players = container.getElementsByTagName("spieler");
+  if (!players.length) return "";
+  var html = '<div class="subhead">' + title + '</div>';
+  for (var i = 0; i < players.length; i++) {
+    var p = players[i];
+    var role = text(p, "aufstellungSpielerRole");
+    var number = showNumber ? ((text(p, "AufstellungNr") || text(p, "aufstellungNr")) + " ") : "";
+    html += '<div class="player">' + number + text(p, "aufstellungSpieler") + (role ? " (" + role + ")" : "") + '</div>';
+  }
+  return html;
+}
+
+function renderLineup(team, title) {
+  if (!team) return "";
+  var html = '<div class="col"><h2>' + title + '</h2>';
+  html += renderPlayerList(directChild(team, "aufstellungTorhueter"), "Torhüter", true);
+  html += renderPlayerList(directChild(team, "aufstellungSpieler"), "Spieler", true);
+  html += renderPlayerList(directChild(team, "aufstellungCoach"), "Staff", false);
+  return html + "</div>";
+}
+
+function parseEvent(rawText) {
+  var goalMatch = rawText.match(/^Tor für (.+?) durch (.+?)(?: auf Pass von (.+?))?\.\s*Neuer Spielstand (\d+:\d+)/);
+  if (goalMatch) {
+    return { type: "goal", team: goalMatch[1], scorer: goalMatch[2], assists: goalMatch[3], score: goalMatch[4] };
+  }
+  var penaltyMatch1 = rawText.match(/^(\d+)\s*Minutenstrafe für (.+?)\s*\((.+?)\)/);
+  if (penaltyMatch1) {
+    return { type: "penalty", minutes: penaltyMatch1[1] + " Min.", player: penaltyMatch1[2], team: penaltyMatch1[3] };
+  }
+  var penaltyMatch2 = rawText.match(/^Bankstrafen? gegen (.+?)\.\s*Die Strafe wird abgesessen von (.+)/);
+  if (penaltyMatch2) {
+    return { type: "penalty", minutes: "", player: penaltyMatch2[2], team: penaltyMatch2[1] };
+  }
+  return { type: "other", text: rawText };
+}
+
+function renderEvent(time, rawText) {
+  var e = parseEvent(rawText);
+  if (e.type === "goal") {
+    var sub = e.scorer + (e.assists ? " – " + e.assists.replace(" und ", " / ") : "");
+    return '<div class="ev"><b>' + time + '</b><span class="ball"></span><div>' + e.score + ' ' + e.team + '<div class="sub">' + sub + '</div></div></div>';
+  }
+  if (e.type === "penalty") {
+    return '<div class="ev"><b>' + time + '</b>' + WHISTLE + '<div>' + e.team + (e.minutes ? ' · ' + e.minutes : '') + ' / ' + e.player + '</div></div>';
+  }
+  return '<div class="ev"><b>' + time + '</b><div>' + rawText + '</div></div>';
+}
+
+function render(d) {
+  var home = text(d, "spielheimTeam");
+  var away = text(d, "spielgastTeam");
+  var isFinished = !!text(d, "spielende");
+  var allMessages = Array.prototype.slice.call(d.getElementsByTagName("message")).reverse();
+  var tickerHtml = allMessages.map(function(m) { return renderEvent(text(m, "spielzeit"), text(m, "text")); }).join("") || "<p class='status'>Noch keine Ereignisse.</p>";
+  var updated = text(d, "last_updated").split(" ")[1] || "";
+
+  var html = isFinished
+    ? '<div class="top"><span class="status-label">Spiel beendet</span></div>'
+    : '<div class="top"><span class="dot"></span><span class="status-label">Live</span></div>';
+
+  html += '<div class="score-row"><div class="team">' + home + '</div>' +
+    '<div class="res">' + text(d, "spieltoreheim") + ' : ' + text(d, "spieltoregast") + '</div>' +
+    '<div class="team">' + away + '</div></div>';
+  html += '<div class="meta">' + text(d, "spieldatum") + ' · ' + text(d, "spielzeit") + ' Uhr · ' + text(d, "spielort") + '</div>';
+  html += '<h2>Liveticker · Stand ' + updated + ' Uhr</h2>' + tickerHtml;
+  html += '<h2>Aufstellungen</h2><div class="lineups">';
+  html += renderLineup(d.getElementsByTagName("aufstellungheim")[0], home);
+  html += renderLineup(d.getElementsByTagName("aufstellunggast")[0], away);
+  html += '</div>';
+
+  content.innerHTML = html;
+}
+
+if (!spielnr || !seasonId) {
+  content.innerHTML = '<p class="error">Kein Spiel angegeben.</p>';
+} else {
+  fetch(WORKER + "/?path=xml/liveticker.aspx&spielnr=" + spielnr + "&saisonid=" + seasonId)
+    .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+    .then(function(t) {
+      var doc = new DOMParser().parseFromString(t, "application/xml");
+      if (doc.getElementsByTagName("parsererror").length) throw new Error("XML parse error");
+      render(doc);
+    })
+    .catch(function() {
+      content.innerHTML = '<p class="error">Spiel konnte nicht geladen werden.</p>';
+    });
+}
+})();
+</script>
+</body>
+</html>
