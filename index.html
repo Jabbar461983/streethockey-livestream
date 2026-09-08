@@ -300,7 +300,70 @@ function renderCard(game) {
     '</div>';
 }
 
+// ============================================================
+// TEST-MODUS: Adresse mit ?demo=1 aufrufen (z.B. index.html?demo=1),
+// dann werden 10 Beispiel-Spiele über 4 Ligen simuliert, um das
+// Layout bei vielen gleichzeitigen Spielen prüfen zu können.
+// ============================================================
+function makeDemoXml(cfg) {
+  var msgsXml = (cfg.messages || []).map(function(m) {
+    return '<message><spielzeit><![CDATA[' + m.time + ']]></spielzeit><text><![CDATA[' + m.text + ']]></text></message>';
+  }).join("");
+  return '<ihs><liveticker>' +
+    '<last_updated><![CDATA[06.09.2026 ' + cfg.updated + ']]></last_updated>' +
+    '<spielnr><![CDATA[' + cfg.spielnr + ']]></spielnr>' +
+    '<spielort><![CDATA[' + cfg.ort + ']]></spielort>' +
+    '<spielbeginn><![CDATA[13:57]]></spielbeginn><spielende><![CDATA[]]></spielende>' +
+    '<spielheimTeamShort><![CDATA[' + cfg.home + ']]></spielheimTeamShort>' +
+    '<spielgastTeamShort><![CDATA[' + cfg.away + ']]></spielgastTeamShort>' +
+    '<spieltoreheim><![CDATA[' + cfg.hs + ']]></spieltoreheim><spieltoregast><![CDATA[' + cfg.as + ']]></spieltoregast>' +
+    '<messages>' + msgsXml + '</messages>' +
+    '</liveticker></ihs>';
+}
+
+var DEMO_GAMES_CONFIG = [
+  { league:"National League", home:"SHC Bulldozers Kernenried-Zauggenried 1", away:"Oberwil Rebells 1", hs:3, as:1, ort:"Kernenried", spielnr:90001, updated:"14:20:00",
+    messages:[{time:"18:02", text:"Tor für SHC Bulldozers Kernenried-Zauggenried 1 durch Michel Bütikofer auf Pass von Severin Fund. Neuer Spielstand 3:1"}] },
+  { league:"National League", home:"Sierre Lions 1", away:"SHC Grenchen-Limpachtal 1", hs:2, as:2, ort:"Sierre", spielnr:90002, updated:"14:19:40",
+    messages:[{time:"25:10", text:"Tor für SHC Grenchen-Limpachtal 1 durch Kris Riesen. Neuer Spielstand 2:2"}] },
+  { league:"National League", home:"SHC Bettlach 1", away:"SHC Bonstetten-Wettswil 1", hs:4, as:0, ort:"Bettlach", spielnr:90003, updated:"14:21:15",
+    messages:[] },
+  { league:"Swiss Cup", home:"SHC La Chaux-de-Fonds 2", away:"SHC Aegerten-Brügg 1", hs:5, as:8, ort:"La Chaux-de-Fonds", spielnr:11527, updated:"14:25:46",
+    messages:[{time:"44:27", text:"Tor für SHC La Chaux-de-Fonds 2 durch Angelo Perez auf Pass von Theo Leuba. Neuer Spielstand 5:8"},
+              {time:"43:15", text:"2 Minutenstrafe für David Puneet Singh (SHC Aegerten-Brügg 1)"}] },
+  { league:"Swiss Cup", home:"SHC Belpa 1107 1", away:"SHC Martigny 1", hs:1, as:1, ort:"Belp", spielnr:90005, updated:"14:18:05",
+    messages:[{time:"10:30", text:"Bankstrafen gegen SHC Martigny 1. Die Strafe wird abgesessen von Luca Fontana"}] },
+  { league:"Classic League 2 – Ost", home:"SV Gals 1", away:"Horgenberg Hammers 1", hs:0, as:2, ort:"Gals", spielnr:90006, updated:"14:22:50",
+    messages:[{time:"30:00", text:"Tor für Horgenberg Hammers 1 durch Simon Meier. Neuer Spielstand 0:2"}] },
+  { league:"Classic League 2 – Ost", home:"SHC Diabla 1", away:"SHC Wild Sharks", hs:3, as:3, ort:"Sion", spielnr:90007, updated:"14:24:00",
+    messages:[] },
+  { league:"Classic League 2 – Ost", home:"SHC Seetal Admirals 1", away:"SHC Steckholz", hs:6, as:1, ort:"Seetal", spielnr:90008, updated:"14:20:33",
+    messages:[{time:"15:12", text:"Tor für SHC Seetal Admirals 1 durch Nico Weber auf Pass von Jan Frei. Neuer Spielstand 6:1"}] },
+  { league:"U15 – Grossfeld", home:"SHC Bulldozers Kernenried-Zauggenried U15", away:"SHC Grenchen-Limpachtal U15 GF Grün", hs:2, as:2, ort:"Zauggenried", spielnr:90009, updated:"14:15:00",
+    messages:[{time:"20:00", text:"Tor für SHC Grenchen-Limpachtal U15 GF Grün durch Timo Lang. Neuer Spielstand 2:2"}] },
+  { league:"U15 – Grossfeld", home:"SHC Erlinsbach U15", away:"SHC Bettlach U15", hs:1, as:0, ort:"Erlinsbach", spielnr:90010, updated:"14:17:22",
+    messages:[] }
+];
+
+function runDemo() {
+  var parser = new DOMParser();
+  var demoGames = DEMO_GAMES_CONFIG.map(function(cfg) {
+    return {
+      doc: parser.parseFromString(makeDemoXml(cfg), "application/xml"),
+      league: { name: cfg.league },
+      seasonId: "17"
+    };
+  });
+  subtitle.textContent = "Test-Modus – Beispieldaten (" + demoGames.length + " Spiele in " +
+    (new Set(DEMO_GAMES_CONFIG.map(function(c){return c.league;})).size) + " Ligen)";
+  grid.innerHTML = demoGames.map(renderCard).join("");
+}
+
 function run() {
+  if (new URLSearchParams(location.search).get("demo")) {
+    runDemo();
+    return;
+  }
   getCurrentSeasonId().then(function(seasonId) {
     if (!seasonId) {
       subtitle.textContent = "Saison konnte nicht ermittelt werden.";

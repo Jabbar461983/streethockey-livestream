@@ -213,7 +213,40 @@ function render(d) {
   content.innerHTML = html;
 }
 
-if (!spielnr || !seasonId) {
+// Test-Modus: spiel.html?demo=1 zeigt Beispieldaten inkl. Aufstellungen
+var DEMO_XML =
+  '<ihs><liveticker><last_updated><![CDATA[06.09.2026 14:25:46]]></last_updated>' +
+  '<spielnr><![CDATA[11527]]></spielnr><spieldatum><![CDATA[06.09.2026]]></spieldatum>' +
+  '<spielzeit><![CDATA[14:00]]></spielzeit><spielort><![CDATA[La Chaux-de-Fonds]]></spielort>' +
+  '<spielbeginn><![CDATA[13:57]]></spielbeginn><spielende><![CDATA[]]></spielende>' +
+  '<spielheimTeam><![CDATA[SHC La Chaux-de-Fonds 2]]></spielheimTeam>' +
+  '<spielgastTeam><![CDATA[SHC Aegerten-Brügg 1]]></spielgastTeam>' +
+  '<spieltoreheim><![CDATA[5]]></spieltoreheim><spieltoregast><![CDATA[8]]></spieltoregast>' +
+  '<aufstellungheim><aufstellungTorhueter><spieler><AufstellungNr><![CDATA[96]]></AufstellungNr>' +
+  '<aufstellungSpieler><![CDATA[Humbert-Droz Quentin]]></aufstellungSpieler><aufstellungSpielerRole/></spieler></aufstellungTorhueter>' +
+  '<aufstellungSpieler><spieler><AufstellungNr><![CDATA[22]]></AufstellungNr>' +
+  '<aufstellungSpieler><![CDATA[Rickli Michael]]></aufstellungSpieler><aufstellungSpielerRole/></spieler>' +
+  '<spieler><AufstellungNr><![CDATA[8]]></AufstellungNr>' +
+  '<aufstellungSpieler><![CDATA[Allaz Kylian]]></aufstellungSpieler><aufstellungSpielerRole><![CDATA[C]]></aufstellungSpielerRole></spieler>' +
+  '</aufstellungSpieler><aufstellungCoach><spieler><aufstellungNr><![CDATA[0]]></aufstellungNr>' +
+  '<aufstellungSpieler><![CDATA[Geissbüler Tony]]></aufstellungSpieler></spieler></aufstellungCoach></aufstellungheim>' +
+  '<aufstellunggast><aufstellungTorhueter><spieler><AufstellungNr><![CDATA[25]]></AufstellungNr>' +
+  '<aufstellungSpieler><![CDATA[Demierre Nadine]]></aufstellungSpieler><aufstellungSpielerRole/></spieler></aufstellungTorhueter>' +
+  '<aufstellungSpieler><spieler><AufstellungNr><![CDATA[92]]></AufstellungNr>' +
+  '<aufstellungSpieler><![CDATA[Hubacher Phil]]></aufstellungSpieler><aufstellungSpielerRole><![CDATA[C]]></aufstellungSpielerRole></spieler>' +
+  '</aufstellungSpieler><aufstellungCoach><spieler><aufstellungNr><![CDATA[0]]></aufstellungNr>' +
+  '<aufstellungSpieler><![CDATA[Hubacher Phil]]></aufstellungSpieler></spieler></aufstellungCoach></aufstellunggast>' +
+  '<messages>' +
+  '<message><spielzeit><![CDATA[44:27]]></spielzeit><text><![CDATA[Tor für SHC La Chaux-de-Fonds 2 durch Angelo Perez auf Pass von Theo Leuba. Neuer Spielstand 5:8]]></text></message>' +
+  '<message><spielzeit><![CDATA[43:15]]></spielzeit><text><![CDATA[2 Minutenstrafe für David Puneet Singh (SHC Aegerten-Brügg 1)]]></text></message>' +
+  '<message><spielzeit><![CDATA[41:17]]></spielzeit><text><![CDATA[Tor für SHC La Chaux-de-Fonds 2 durch Elio Cocimano. Neuer Spielstand 3:8]]></text></message>' +
+  '<message><spielzeit><![CDATA[34:16]]></spielzeit><text><![CDATA[Bankstrafen gegen SHC La Chaux-de-Fonds 2. Die Strafe wird abgesessen von Hugo Zbinden]]></text></message>' +
+  '<message><spielzeit><![CDATA[07:20]]></spielzeit><text><![CDATA[Tor für SHC Aegerten-Brügg 1 durch Phil Hubacher. Neuer Spielstand 0:1]]></text></message>' +
+  '</messages></liveticker></ihs>';
+
+if (new URLSearchParams(location.search).get("demo")) {
+  render(new DOMParser().parseFromString(DEMO_XML, "application/xml"));
+} else if (!spielnr || !seasonId) {
   content.innerHTML = '<p class="error">Kein Spiel angegeben.</p>';
 } else {
   fetch(WORKER + "/?path=xml/liveticker.aspx&spielnr=" + spielnr + "&saisonid=" + seasonId)
