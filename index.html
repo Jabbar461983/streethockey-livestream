@@ -21,59 +21,44 @@ body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   background:var(--bg);
   color:var(--text);
-  padding:24px 16px 60px;
+  padding:20px 14px 50px;
 }
-header{max-width:1100px;margin:0 auto 28px}
-h1{font-size:26px;font-weight:800;margin:0 0 4px;letter-spacing:-.5px}
-.subtitle{color:var(--muted);font-size:14px}
-.grid{
-  max-width:1100px;margin:0 auto;
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-  gap:16px;
+header{max-width:820px;margin:0 auto 20px}
+h1{font-size:22px;font-weight:800;margin:0 0 4px;letter-spacing:-.5px}
+.subtitle{color:var(--muted);font-size:13px}
+.wrap{max-width:820px;margin:0 auto}
+.league-section{margin-bottom:18px}
+.league-title{
+  font-size:12px;text-transform:uppercase;letter-spacing:.7px;font-weight:800;
+  color:var(--accent);padding:0 4px 6px;border-bottom:1px solid rgba(62,166,255,.25);
+  margin-bottom:2px;
 }
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:16px 18px;
-  transition:transform .15s ease, border-color .15s ease;
-}
-.card:hover{transform:translateY(-2px);border-color:rgba(62,166,255,.4)}
-.league{
-  font-size:11px;text-transform:uppercase;letter-spacing:.6px;
-  color:var(--accent);font-weight:700;margin-bottom:8px;
-}
-.top{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--live);animation:pulse 1.4s infinite}
+.games{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.game{border-bottom:1px solid var(--border)}
+.game:last-child{border-bottom:none}
+.game-row{display:flex;align-items:center;gap:8px;padding:7px 10px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--live);flex-shrink:0;animation:pulse 1.4s infinite}
 @keyframes pulse{0%{opacity:1}50%{opacity:.25}100%{opacity:1}}
-.live-label{font-size:12px;font-weight:800;letter-spacing:1px;color:var(--live);text-transform:uppercase}
-.updated{margin-left:auto;font-size:11px;color:var(--muted)}
-.score-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:8px}
-.team-block{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
-.avatar-wrap{width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;position:relative;background:rgba(255,255,255,.06)}
-.avatar-wrap img{width:100%;height:100%;object-fit:contain;display:none}
-.avatar-fallback{
-  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--muted);
-}
-.team{flex:1;font-weight:600;font-size:14px;text-align:center}
-.res{
-  font-size:24px;font-weight:800;color:var(--text);
-  text-decoration:none;white-space:nowrap;
-}
+.team-abbr{font-weight:700;font-size:13px;width:36px;text-align:center;flex-shrink:0}
+.mini-avatar{width:20px;height:20px;border-radius:50%;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,.06);position:relative}
+.mini-avatar img{width:100%;height:100%;object-fit:contain;display:none}
+.mini-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;color:var(--muted)}
+.res{font-size:15px;font-weight:800;color:var(--text);text-decoration:none;white-space:nowrap}
 .res:hover{color:var(--accent)}
-.meta{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:10px}
-.pin{width:11px;height:11px;flex-shrink:0}
-.ticker{border-top:1px solid var(--border);padding-top:8px}
-.ev{font-size:13px;margin-bottom:6px;display:flex;align-items:flex-start;gap:6px;color:rgba(240,242,245,.85)}
-.ev b{min-width:34px;color:var(--muted);font-weight:600}
-.ball{width:9px;height:9px;border-radius:50%;background:var(--goal);flex-shrink:0;margin-top:4px}
-.wh{flex-shrink:0;margin-top:1px}
-.empty{
-  max-width:1100px;margin:60px auto;text-align:center;color:var(--muted);font-size:15px;
+.spacer{flex:1}
+.toggle{
+  background:none;border:1px solid var(--border);color:var(--muted);
+  font-size:11px;padding:3px 9px;border-radius:12px;cursor:pointer;white-space:nowrap;
 }
-footer{max-width:1100px;margin:40px auto 0;text-align:center;font-size:12px;color:var(--muted)}
+.toggle:hover{border-color:var(--accent);color:var(--accent)}
+.events{display:none;padding:2px 10px 8px 44px}
+.events.open{display:block}
+.ev{font-size:12px;margin-bottom:5px;display:flex;align-items:flex-start;gap:6px;color:rgba(240,242,245,.85)}
+.ev b{min-width:32px;color:var(--muted);font-weight:600}
+.ball{width:8px;height:8px;border-radius:50%;background:var(--goal);flex-shrink:0;margin-top:3px}
+.wh{flex-shrink:0;margin-top:1px}
+.empty{max-width:820px;margin:60px auto;text-align:center;color:var(--muted);font-size:15px}
+footer{max-width:820px;margin:32px auto 0;text-align:center;font-size:12px;color:var(--muted)}
 footer a{color:var(--accent)}
 </style>
 </head>
@@ -82,20 +67,14 @@ footer a{color:var(--accent)}
   <h1>Live Spiele</h1>
   <div class="subtitle" id="subtitle">Wird geladen …</div>
 </header>
-<div class="grid" id="grid"></div>
+<div class="wrap" id="wrap"></div>
 
 <footer>Daten: <a href="https://www.swiss-streethockey.ch" target="_blank" rel="noopener">Swiss Streethockey</a> · Aktualisiert sich automatisch alle 15 Sekunden</footer>
 
 <script>
 (function(){
-// ============================================================
-// KONFIGURATION
-// ============================================================
-
-// Basis-URL des Cloudflare Workers (Proxy zu liga.ssha.ch)
 var WORKER = "https://crimson-shadow-9fa2.ch-nessier.workers.dev";
 
-// Alle Ligen/Divisionen des Verbandes (id, Typ, Anzeigename)
 var LEAGUES = [
   {id:292,  type:"liga",     name:"National League"},
   {id:300,  type:"liga",     name:"Swiss Cup"},
@@ -114,22 +93,47 @@ var LEAGUES = [
   {id:2112, type:"division", name:"U9 – Region B"}
 ];
 
-// Wie oft neu geladen wird (Sekunden)
 var REFRESH_SECONDS = 15;
+var CATEGORY_ORDER = ["National League","Challenge League","Damen","U18","U15","U12","U9"];
 
-// ============================================================
-// Ab hier keine Anpassungen nötig
-// ============================================================
-
-var grid = document.getElementById("grid");
+var wrap = document.getElementById("wrap");
 var subtitle = document.getElementById("subtitle");
 
-var PIN = '<svg class="pin" viewBox="0 0 24 24"><path fill="#3ea6ff" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>';
-var WHISTLE = '<svg class="wh" width="14" height="14" viewBox="0 0 24 24"><circle cx="8" cy="12" r="6" fill="none" stroke="#f0f2f5" stroke-width="2"/><circle cx="8" cy="12" r="2" fill="#f0f2f5"/><rect x="13" y="10" width="8" height="4" rx="2" fill="#f0f2f5"/></svg>';
+var WHISTLE = '<svg class="wh" width="12" height="12" viewBox="0 0 24 24"><circle cx="8" cy="12" r="6" fill="none" stroke="#f0f2f5" stroke-width="2"/><circle cx="8" cy="12" r="2" fill="#f0f2f5"/><rect x="13" y="10" width="8" height="4" rx="2" fill="#f0f2f5"/></svg>';
 
-// Verein pro Team-Name (für Logo-Dateinamen: logos/<VEREIN>.png)
-// Alle Mannschaften desselben Vereins (1., 2., Damen, U18, U15, U12, U9 ...)
-// nutzen automatisch dieselbe Logo-Datei.
+var TEAM_KUERZEL = {
+  "SHC Fribourg Dragons":"FRD",
+  "Horgenberg Hammers 1":"HBH","Horgenberg Hammers 2":"HB2","Horgenberg Hammers Damen":"HBF",
+  "Horgenberg Hammers U18":"HBA","Horgenberg Hämmerlis U9":"HBD","Horgenberg Hammers U15":"HBB","Horgenberg Hammers U12":"HBC",
+  "Oberwil Rebells 1":"OWR","Oberwil Rebells 2":"OW2","Oberwil Rebells U18":"OWA",
+  "Oberwil Rebells U15":"OWB","Oberwil Rebells U12":"OWC","Oberwil Rebells U9":"OWD",
+  "SHC Aegerten-Brügg 1":"AEB","SHC Aegerten-Brügg U15":"ABB","SHC Aegerten-Brügg U12":"AEC","SHC Aegerten-Brügg U9":"AED",
+  "SHC Belpa 1107 1":"BLP","SHC Belpa 1107 2":"BL2","SHC Belpa 1107 Damen":"BLF","SHC Belpa 1107 U18":"BLA","SHC Belpa 1107 U15":"BLB",
+  "SHC Berner Oberland 1":"OLD",
+  "SHC Bettlach 1":"BTT","SHC Bettlach 2":"BT2","SHC Bettlach - Seetal Damen":"BTF",
+  "SHC Bettlach U18":"BTA","SHC Bettlach U15":"BTB","SHC Bettlach U12":"BTC","SHC Bettlach U9":"BTD",
+  "SHC Bonstetten-Wettswil 1":"BWD","SHC Bonstetten-Wettswil 2":"BW2","SHC Bonstetten-Wettswil U18":"BWA",
+  "SHC Bonstetten-Wettswil U9":"BWD","SHC Bonstetten-Wettswil U12":"BWC","SHC Bonstetten-Wettswil U15":"BWB",
+  "SHC Bulldozers Kernenried-Zauggenried 1":"KRZ","SHC Bulldozers Kernenried-Zauggenried 2":"KR2",
+  "SHC Bulldozers Kernenried-Zauggenried Damen":"KRF","SHC Bulldozers Kernenried-Zauggenried U18":"KRA",
+  "SHC Bulldozers Kernenried-Zauggenried U15":"KRB","SHC Bulldozers Kernenried-Zauggenried U9 weiss":"KDW",
+  "SHC Bulldozers Kernenried-Zauggenried U12":"KRC","SHC Bulldozers Kernenried-Zauggenried U9 schwarz":"KDS",
+  "SHC Diabla 1":"DIA","SHC Valais U9":"VAD","SHC Valais Femmes":"VAF","SHC Valais U12":"VAC",
+  "SHC Erlinsbach 1":"ERL","SHC Erlinsbach U12":"ERC","SHC Erlinsbach U15":"ERB","SHC Erlinsbach U9":"ERD",
+  "SHC Grenchen-Limpachtal 1":"GRL","SHC Grenchen-Limpachtal 2":"GR2","SHC Grenchen-Limpachtal Damen":"GRF",
+  "SHC Grenchen-Limpachtal 3":"GR3","SHC Grenchen-Limpachtal U18":"GRA",
+  "SHC Grenchen-Limpachtal U15 GF Grün":"GBG","SHC Grenchen-Limpachtal U15 GF Weiss":"GBW",
+  "SHC Grenchen-Limpachtal U12 GF":"GBC","SHC Grenchen-Limpachtal U9":"GBD",
+  "SHC La Chaux-de-Fonds 1":"CHX","SHC La Chaux-de-Fonds 2":"CH2","SHC La Chaux-de-Fonds Damen":"CHF",
+  "SHC La Chaux-de-Fonds U18":"CHA","SHC La Chaux-de-Fonds U15":"CHB","SHC La Chaux-de-Fonds U12":"CHC",
+  "SHC Langenthal Devils 1":"LTD",
+  "SHC Martigny 1":"MAR","SHC Martigny 2":"MA2","SHC Martigny U18":"MAA","SHC Martigny U15":"MAB","SHC Martigny U12":"MAC",
+  "SHC Seetal Admirals 1":"ADM","SHC Seetal Admirals 2":"AD2",
+  "SHC Steckholz":"SHZ","SHC Wild Sharks":"WSK",
+  "Sierre Lions 1":"SLI","Sierre Lions 2":"SL2","Sierre Lions U18":"SLA",
+  "SV Gals 1":"GAL","SV Gals U12":"GAC","SV Gals U9":"GAD","SV Gals U15":"GAB"
+};
+
 var TEAM_CLUB = {
   "SHC Fribourg Dragons":"fribourg-dragons",
   "Horgenberg Hammers 1":"horgenberg","Horgenberg Hammers 2":"horgenberg","Horgenberg Hammers Damen":"horgenberg",
@@ -164,17 +168,17 @@ var TEAM_CLUB = {
 };
 
 function kuerzelFor(teamName) {
+  if (TEAM_KUERZEL[teamName]) return TEAM_KUERZEL[teamName];
   return teamName.replace(/^(SHC|SV|HC)\s+/, "").substring(0, 3).toUpperCase();
 }
 function clubSlugFor(teamName) {
   if (TEAM_CLUB[teamName]) return TEAM_CLUB[teamName];
   return teamName.replace(/^(SHC|SV|HC)\s+/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
-
 function renderAvatar(teamName) {
   var initials = kuerzelFor(teamName);
   var slug = clubSlugFor(teamName);
-  return '<div class="avatar-wrap"><div class="avatar-fallback">' + initials + '</div>' +
+  return '<div class="mini-avatar"><div class="mini-fallback">' + initials.substring(0,2) + '</div>' +
     '<img src="logos/' + slug + '.png" alt="" ' +
     'onload="this.style.display=\'block\';this.previousElementSibling.style.display=\'none\'" ' +
     'onerror="this.remove()"></div>';
@@ -183,14 +187,6 @@ function renderAvatar(teamName) {
 function text(node, tag) {
   var el = node.getElementsByTagName(tag)[0];
   return el ? el.textContent.trim() : "";
-}
-
-function directChild(parent, tagName) {
-  if (!parent) return null;
-  for (var i = 0; i < parent.children.length; i++) {
-    if (parent.children[i].tagName === tagName) return parent.children[i];
-  }
-  return null;
 }
 
 function todayGerman() {
@@ -203,8 +199,8 @@ function fetchXml(url) {
   return fetch(url).then(function(r) {
     if (!r.ok) throw new Error("HTTP " + r.status);
     return r.text();
-  }).then(function(text) {
-    var doc = new DOMParser().parseFromString(text, "application/xml");
+  }).then(function(t) {
+    var doc = new DOMParser().parseFromString(t, "application/xml");
     if (doc.getElementsByTagName("parsererror").length) throw new Error("XML parse error");
     return doc;
   });
@@ -218,7 +214,6 @@ function getCurrentSeasonId() {
   });
 }
 
-// Findet alle heutigen Spiele mit aktivem Liveticker, für jede Liga
 function findCandidates() {
   var today = todayGerman();
   return Promise.all(LEAGUES.map(function(league) {
@@ -237,7 +232,6 @@ function findCandidates() {
   });
 }
 
-// Prüft ein Kandidaten-Spiel: wirklich live? (gestartet, aber nicht beendet)
 function checkLive(candidate, seasonId) {
   var url = WORKER + "/?path=xml/liveticker.aspx&spielnr=" + candidate.spielnr + "&saisonid=" + seasonId + "&_=" + Date.now();
   return fetchXml(url).then(function(doc) {
@@ -250,7 +244,6 @@ function checkLive(candidate, seasonId) {
   }).catch(function() { return null; });
 }
 
-// --- Ticker-Ereignis erkennen und formatieren (Tor / Strafe / Sonstiges) ---
 function parseEvent(rawText) {
   var goalMatch = rawText.match(/^Tor für (.+?) durch (.+?)(?: auf Pass von (.+?))?\.\s*Neuer Spielstand (\d+:\d+)/);
   if (goalMatch) {
@@ -271,7 +264,7 @@ function renderEvent(time, rawText) {
   var e = parseEvent(rawText);
   if (e.type === "goal") {
     var sub = e.scorer + (e.assists ? " – " + e.assists.replace(" und ", " / ") : "");
-    return '<div class="ev"><b>' + time + '</b><span class="ball"></span><div>' + e.score + ' ' + e.team + '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + sub + '</div></div></div>';
+    return '<div class="ev"><b>' + time + '</b><span class="ball"></span><div>' + e.score + ' ' + e.team + '<div style="font-size:10.5px;color:var(--muted);margin-top:1px">' + sub + '</div></div></div>';
   }
   if (e.type === "penalty") {
     return '<div class="ev"><b>' + time + '</b>' + WHISTLE + '<div>' + e.team + (e.minutes ? ' · ' + e.minutes : '') + ' / ' + e.player + '</div></div>';
@@ -279,32 +272,90 @@ function renderEvent(time, rawText) {
   return '<div class="ev"><b>' + time + '</b><div>' + rawText + '</div></div>';
 }
 
-function renderCard(game) {
+function categoryFor(leagueName) {
+  if (leagueName.indexOf("Classic League") !== -1) return "Classic League";
+  var base = leagueName.split(" – ")[0];
+  return base;
+}
+function categoryOrderIndex(category) {
+  var idx = CATEGORY_ORDER.indexOf(category);
+  if (idx !== -1) return idx;
+  if (category === "Classic League") return 999;
+  return CATEGORY_ORDER.length;
+}
+
+var uidCounter = 0;
+
+function renderGameRow(game) {
   var d = game.doc;
   var home = text(d, "spielheimTeamShort");
   var away = text(d, "spielgastTeamShort");
   var allMessages = Array.prototype.slice.call(d.getElementsByTagName("message")).reverse();
-  var visible = allMessages.slice(0, 3);
-  var tickerHtml = visible.map(function(m) { return renderEvent(text(m, "spielzeit"), text(m, "text")); }).join("");
-  var updated = text(d, "last_updated").split(" ")[1] || "";
+  var eventsHtml = allMessages.map(function(m) { return renderEvent(text(m, "spielzeit"), text(m, "text")); }).join("") || "<p style='color:var(--muted);font-size:12px'>Noch keine Ereignisse.</p>";
   var detailUrl = "spiel.html?spielnr=" + text(d, "spielnr") + "&saisonid=" + game.seasonId;
+  var uid = "ev" + (uidCounter++);
 
-  return '<div class="card">' +
-    '<div class="league">' + game.league.name + '</div>' +
-    '<div class="top"><span class="dot"></span><span class="live-label">Live</span><span class="updated">' + updated + ' Uhr</span></div>' +
-    '<div class="score-row"><div class="team-block">' + renderAvatar(home) + '<div class="team">' + home + '</div></div>' +
-    '<a class="res" href="' + detailUrl + '">' + text(d, "spieltoreheim") + ' : ' + text(d, "spieltoregast") + '</a>' +
-    '<div class="team-block">' + renderAvatar(away) + '<div class="team">' + away + '</div></div></div>' +
-    '<div class="meta">' + PIN + ' ' + text(d, "spielort") + '</div>' +
-    (tickerHtml ? '<div class="ticker">' + tickerHtml + '</div>' : '') +
+  return '<div class="game">' +
+    '<div class="game-row">' +
+    '<span class="dot"></span>' +
+    renderAvatar(home) + '<div class="team-abbr">' + kuerzelFor(home) + '</div>' +
+    '<a class="res" href="' + detailUrl + '">' + text(d, "spieltoreheim") + ':' + text(d, "spieltoregast") + '</a>' +
+    '<div class="team-abbr">' + kuerzelFor(away) + '</div>' + renderAvatar(away) +
+    '<span class="spacer"></span>' +
+    '<button class="toggle" onclick="var e=document.getElementById(\'' + uid + '\');e.classList.toggle(\'open\');this.textContent=e.classList.contains(\'open\')?\'Verbergen\':\'Ereignisse\';">Ereignisse</button>' +
+    '</div>' +
+    '<div class="events" id="' + uid + '">' + eventsHtml + '</div>' +
     '</div>';
 }
 
-// ============================================================
-// TEST-MODUS: Adresse mit ?demo=1 aufrufen (z.B. index.html?demo=1),
-// dann werden 10 Beispiel-Spiele über 4 Ligen simuliert, um das
-// Layout bei vielen gleichzeitigen Spielen prüfen zu können.
-// ============================================================
+function renderGrouped(games) {
+  var byCategory = {};
+  games.forEach(function(g) {
+    var cat = categoryFor(g.league.name);
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push(g);
+  });
+  var categories = Object.keys(byCategory).sort(function(a, b) {
+    return categoryOrderIndex(a) - categoryOrderIndex(b);
+  });
+  wrap.innerHTML = categories.map(function(cat) {
+    return '<div class="league-section">' +
+      '<div class="league-title">' + cat + '</div>' +
+      '<div class="games">' + byCategory[cat].map(renderGameRow).join("") + '</div>' +
+      '</div>';
+  }).join("");
+}
+
+function run() {
+  if (new URLSearchParams(location.search).get("demo")) {
+    runDemo();
+    return;
+  }
+  getCurrentSeasonId().then(function(seasonId) {
+    if (!seasonId) {
+      subtitle.textContent = "Saison konnte nicht ermittelt werden.";
+      return;
+    }
+    findCandidates().then(function(candidates) {
+      if (!candidates.length) {
+        subtitle.textContent = "Aktuell läuft kein Spiel.";
+        wrap.innerHTML = "";
+        return;
+      }
+      Promise.all(candidates.map(function(c) { return checkLive(c, seasonId); })).then(function(results) {
+        var liveGames = results.filter(function(g) { return g; });
+        if (!liveGames.length) {
+          subtitle.textContent = "Aktuell läuft kein Spiel.";
+          wrap.innerHTML = "";
+          return;
+        }
+        subtitle.textContent = liveGames.length + " Spiel" + (liveGames.length > 1 ? "e" : "") + " laufen gerade";
+        renderGrouped(liveGames);
+      });
+    });
+  });
+}
+
 function makeDemoXml(cfg) {
   var msgsXml = (cfg.messages || []).map(function(m) {
     return '<message><spielzeit><![CDATA[' + m.time + ']]></spielzeit><text><![CDATA[' + m.text + ']]></text></message>';
@@ -341,7 +392,7 @@ var DEMO_GAMES_CONFIG = [
     messages:[{time:"15:12", text:"Tor für SHC Seetal Admirals 1 durch Nico Weber auf Pass von Jan Frei. Neuer Spielstand 6:1"}] },
   { league:"U15 – Grossfeld", home:"SHC Bulldozers Kernenried-Zauggenried U15", away:"SHC Grenchen-Limpachtal U15 GF Grün", hs:2, as:2, ort:"Zauggenried", spielnr:90009, updated:"14:15:00",
     messages:[{time:"20:00", text:"Tor für SHC Grenchen-Limpachtal U15 GF Grün durch Timo Lang. Neuer Spielstand 2:2"}] },
-  { league:"U15 – Grossfeld", home:"SHC Erlinsbach U15", away:"SHC Bettlach U15", hs:1, as:0, ort:"Erlinsbach", spielnr:90010, updated:"14:17:22",
+  { league:"U15 – Kleinfeld", home:"SHC Erlinsbach U15", away:"SHC Bettlach U15", hs:1, as:0, ort:"Erlinsbach", spielnr:90010, updated:"14:17:22",
     messages:[] }
 ];
 
@@ -354,39 +405,9 @@ function runDemo() {
       seasonId: "17"
     };
   });
-  subtitle.textContent = "Test-Modus – Beispieldaten (" + demoGames.length + " Spiele in " +
-    (new Set(DEMO_GAMES_CONFIG.map(function(c){return c.league;})).size) + " Ligen)";
-  grid.innerHTML = demoGames.map(renderCard).join("");
-}
-
-function run() {
-  if (new URLSearchParams(location.search).get("demo")) {
-    runDemo();
-    return;
-  }
-  getCurrentSeasonId().then(function(seasonId) {
-    if (!seasonId) {
-      subtitle.textContent = "Saison konnte nicht ermittelt werden.";
-      return;
-    }
-    findCandidates().then(function(candidates) {
-      if (!candidates.length) {
-        subtitle.textContent = "Aktuell läuft kein Spiel.";
-        grid.innerHTML = "";
-        return;
-      }
-      Promise.all(candidates.map(function(c) { return checkLive(c, seasonId); })).then(function(results) {
-        var liveGames = results.filter(function(g) { return g; });
-        if (!liveGames.length) {
-          subtitle.textContent = "Aktuell läuft kein Spiel.";
-          grid.innerHTML = "";
-          return;
-        }
-        subtitle.textContent = liveGames.length + " Spiel" + (liveGames.length > 1 ? "e" : "") + " laufen gerade";
-        grid.innerHTML = liveGames.map(renderCard).join("");
-      });
-    });
-  });
+  var catCount = new Set(demoGames.map(function(g){ return categoryFor(g.league.name); })).size;
+  subtitle.textContent = "Test-Modus – " + demoGames.length + " Spiele in " + catCount + " Ligen";
+  renderGrouped(demoGames);
 }
 
 run();
