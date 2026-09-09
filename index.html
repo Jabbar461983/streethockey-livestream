@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Live Spiele – Swiss Streethockey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0e1117;
@@ -18,7 +21,7 @@
 *{box-sizing:border-box}
 body{
   margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   background:var(--bg);
   color:var(--text);
   padding:20px 14px 50px;
@@ -38,7 +41,8 @@ h1{font-size:22px;font-weight:800;margin:0 0 4px;letter-spacing:-.5px}
 .game{border-bottom:1px solid var(--border)}
 .game:last-child{border-bottom:none}
 .game-row{display:flex;align-items:center;gap:8px;padding:7px 10px}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--live);flex-shrink:0;animation:pulse 1.4s infinite}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--live);flex-shrink:0}
+.dot.goal{background:#2ecc71;animation:pulse 1.4s infinite}
 @keyframes pulse{0%{opacity:1}50%{opacity:.25}100%{opacity:1}}
 .team-abbr{font-weight:700;font-size:13px;width:36px;text-align:center;flex-shrink:0}
 .mini-avatar{width:20px;height:20px;border-radius:50%;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,.06);position:relative}
@@ -308,13 +312,17 @@ function renderGameRow(game) {
   var uid = "ev" + (uidCounter++);
   var updated = text(d, "last_updated").split(" ")[1] || "";
 
+  // Grün blinkt nur, wenn dieses Spiel (global über alle Ligen/Spiele hinweg)
+  // das zeitlich neueste Tor hat - siehe Berechnung in renderGrouped()
+  var dotClass = "dot" + (game._istNeuestesTor ? " goal" : "");
+
   return '<div class="game">' +
     '<div class="game-row">' +
-    '<span class="dot"></span>' +
+    '<span class="' + dotClass + '"></span>' +
     renderAvatar(home) + '<div class="team-abbr">' + kuerzelFor(home) + '</div>' +
     '<a class="res" href="' + detailUrl + '">' + text(d, "spieltoreheim") + ':' + text(d, "spieltoregast") + '</a>' +
     '<div class="team-abbr">' + kuerzelFor(away) + '</div>' + renderAvatar(away) +
-    '<span class="game-time">' + updated + '</span>' +
+    '<span class="game-time">Update: ' + updated + '</span>' +
     '<span class="spacer"></span>' +
     '<button class="toggle" onclick="var e=document.getElementById(\'' + uid + '\');e.classList.toggle(\'open\');this.textContent=e.classList.contains(\'open\')?\'Verbergen\':\'Ereignisse\';">Ereignisse</button>' +
     '</div>' +
@@ -322,7 +330,29 @@ function renderGameRow(game) {
     '</div>';
 }
 
+function parseUpdateTime(lastUpdated) {
+  // Format: "06.09.2026 14:25:46" -> vergleichbarer Zeitwert
+  var parts = lastUpdated.split(" ");
+  var datum = (parts[0] || "").split(".");
+  var zeit = (parts[1] || "0:0:0").split(":");
+  return new Date(+datum[2], +datum[1] - 1, +datum[0], +zeit[0], +zeit[1], +zeit[2] || 0).getTime();
+}
+
 function renderGrouped(games) {
+  // Über ALLE Spiele hinweg ermitteln, wo zuletzt ein Tor gefallen ist.
+  // Nur das/die Spiel(e) mit dem zeitlich neuesten Tor blinken grün.
+  var maxGoalTime = -1;
+  games.forEach(function(g) {
+    var msgs = Array.prototype.slice.call(g.doc.getElementsByTagName("message")).reverse();
+    var letztesIstTor = msgs.length > 0 && parseEvent(text(msgs[0], "text")).type === "goal";
+    g._letztesIstTor = letztesIstTor;
+    g._updateTime = parseUpdateTime(text(g.doc, "last_updated"));
+    if (letztesIstTor && g._updateTime > maxGoalTime) maxGoalTime = g._updateTime;
+  });
+  games.forEach(function(g) {
+    g._istNeuestesTor = g._letztesIstTor && g._updateTime === maxGoalTime && maxGoalTime > -1;
+  });
+
   var byCategory = {};
   games.forEach(function(g) {
     var cat = categoryFor(g.league.name);
@@ -390,18 +420,18 @@ function makeDemoXml(cfg) {
 }
 
 var DEMO_GAMES_CONFIG = [
-  { league:"National League", home:"SHC Bulldozers Kernenried-Zauggenried 1", away:"Oberwil Rebells 1", hs:3, as:1, ort:"Kernenried", spielnr:90001, updated:"14:20:00",
+  { league:"National League", home:"SHC Bulldozers Kernenried-Zauggenried 1", away:"Oberwil Rebells 1", hs:3, as:1, ort:"Kernenried", spielnr:90001, updated:"14:22:00",
     messages:[{time:"18:02", text:"Tor für SHC Bulldozers Kernenried-Zauggenried 1 durch Michel Bütikofer auf Pass von Severin Fund. Neuer Spielstand 3:1"}] },
-  { league:"National League", home:"Sierre Lions 1", away:"SHC Grenchen-Limpachtal 1", hs:2, as:2, ort:"Sierre", spielnr:90002, updated:"14:19:40",
+  { league:"National League", home:"Sierre Lions 1", away:"SHC Grenchen-Limpachtal 1", hs:2, as:2, ort:"Sierre", spielnr:90002, updated:"14:22:00",
     messages:[{time:"25:10", text:"Tor für SHC Grenchen-Limpachtal 1 durch Kris Riesen. Neuer Spielstand 2:2"}] },
   { league:"National League", home:"SHC Bettlach 1", away:"SHC Bonstetten-Wettswil 1", hs:4, as:0, ort:"Bettlach", spielnr:90003, updated:"14:21:15",
     messages:[] },
   { league:"Swiss Cup", home:"SHC La Chaux-de-Fonds 2", away:"SHC Aegerten-Brügg 1", hs:5, as:8, ort:"La Chaux-de-Fonds", spielnr:11527, updated:"14:25:46",
-    messages:[{time:"44:27", text:"Tor für SHC La Chaux-de-Fonds 2 durch Angelo Perez auf Pass von Theo Leuba. Neuer Spielstand 5:8"},
+    messages:[{time:"20:14", text:"Tor für SHC Aegerten-Brügg 1 durch Phil Hubacher auf Pass von Erol Atalay und Nadine Demierre. Neuer Spielstand 1:3"},
               {time:"43:15", text:"2 Minutenstrafe für David Puneet Singh (SHC Aegerten-Brügg 1)"}] },
   { league:"Swiss Cup", home:"SHC Belpa 1107 1", away:"SHC Martigny 1", hs:1, as:1, ort:"Belp", spielnr:90005, updated:"14:18:05",
     messages:[{time:"10:30", text:"Bankstrafen gegen SHC Martigny 1. Die Strafe wird abgesessen von Luca Fontana"}] },
-  { league:"Classic League 2 – Ost", home:"SV Gals 1", away:"Horgenberg Hammers 1", hs:0, as:2, ort:"Gals", spielnr:90006, updated:"14:22:50",
+  { league:"Classic League 2 – Ost", home:"SV Gals 1", away:"Horgenberg Hammers 1", hs:0, as:2, ort:"Gals", spielnr:90006, updated:"14:10:00",
     messages:[{time:"30:00", text:"Tor für Horgenberg Hammers 1 durch Simon Meier. Neuer Spielstand 0:2"}] },
   { league:"Classic League 2 – Ost", home:"SHC Diabla 1", away:"SHC Wild Sharks", hs:3, as:3, ort:"Sion", spielnr:90007, updated:"14:24:00",
     messages:[] },
