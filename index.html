@@ -108,6 +108,7 @@ var CATEGORY_ORDER = ["National League","Challenge League","Damen","U18","U15","
 var wrap = document.getElementById("wrap");
 var subtitle = document.getElementById("subtitle");
 var pageRefresh = document.getElementById("pageRefresh");
+var isDemo = !!new URLSearchParams(location.search).get("demo");
 
 function markPageRefreshed() {
   var d = new Date();
@@ -308,7 +309,9 @@ function renderGameRow(game) {
   var away = text(d, "spielgastTeamShort");
   var allMessages = Array.prototype.slice.call(d.getElementsByTagName("message")).reverse();
   var eventsHtml = allMessages.map(function(m) { return renderEvent(text(m, "spielzeit"), text(m, "text")); }).join("") || "<p style='color:var(--muted);font-size:12px'>Noch keine Ereignisse.</p>";
-  var detailUrl = "spiel.html?spielnr=" + text(d, "spielnr") + "&saisonid=" + game.seasonId;
+  var detailUrl = isDemo
+    ? "spiel.html?demo=1"
+    : "spiel.html?spielnr=" + text(d, "spielnr") + "&saisonid=" + game.seasonId;
   var uid = "ev" + (uidCounter++);
   var updated = text(d, "last_updated").split(" ")[1] || "";
 
