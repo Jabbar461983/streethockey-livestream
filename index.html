@@ -23,9 +23,10 @@ body{
   color:var(--text);
   padding:20px 14px 50px;
 }
-header{max-width:820px;margin:0 auto 20px}
+header{max-width:820px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 h1{font-size:22px;font-weight:800;margin:0 0 4px;letter-spacing:-.5px}
 .subtitle{color:var(--muted);font-size:13px}
+.page-refresh{color:var(--muted);font-size:12px;white-space:nowrap;padding-top:4px}
 .wrap{max-width:820px;margin:0 auto}
 .league-section{margin-bottom:18px}
 .league-title{
@@ -45,6 +46,7 @@ h1{font-size:22px;font-weight:800;margin:0 0 4px;letter-spacing:-.5px}
 .mini-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;color:var(--muted)}
 .res{font-size:15px;font-weight:800;color:var(--text);text-decoration:none;white-space:nowrap}
 .res:hover{color:var(--accent)}
+.game-time{font-size:11px;color:var(--muted);white-space:nowrap}
 .spacer{flex:1}
 .toggle{
   background:none;border:1px solid var(--border);color:var(--muted);
@@ -64,8 +66,11 @@ footer a{color:var(--accent)}
 </head>
 <body>
 <header>
-  <h1>Live Spiele</h1>
-  <div class="subtitle" id="subtitle">Wird geladen …</div>
+  <div>
+    <h1>Live Spiele</h1>
+    <div class="subtitle" id="subtitle">Wird geladen …</div>
+  </div>
+  <div class="page-refresh" id="pageRefresh"></div>
 </header>
 <div class="wrap" id="wrap"></div>
 
@@ -98,6 +103,13 @@ var CATEGORY_ORDER = ["National League","Challenge League","Damen","U18","U15","
 
 var wrap = document.getElementById("wrap");
 var subtitle = document.getElementById("subtitle");
+var pageRefresh = document.getElementById("pageRefresh");
+
+function markPageRefreshed() {
+  var d = new Date();
+  var pad = function(n) { return (n < 10 ? "0" : "") + n; };
+  pageRefresh.textContent = "Aktualisiert um " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+}
 
 var WHISTLE = '<svg class="wh" width="12" height="12" viewBox="0 0 24 24"><circle cx="8" cy="12" r="6" fill="none" stroke="#f0f2f5" stroke-width="2"/><circle cx="8" cy="12" r="2" fill="#f0f2f5"/><rect x="13" y="10" width="8" height="4" rx="2" fill="#f0f2f5"/></svg>';
 
@@ -294,6 +306,7 @@ function renderGameRow(game) {
   var eventsHtml = allMessages.map(function(m) { return renderEvent(text(m, "spielzeit"), text(m, "text")); }).join("") || "<p style='color:var(--muted);font-size:12px'>Noch keine Ereignisse.</p>";
   var detailUrl = "spiel.html?spielnr=" + text(d, "spielnr") + "&saisonid=" + game.seasonId;
   var uid = "ev" + (uidCounter++);
+  var updated = text(d, "last_updated").split(" ")[1] || "";
 
   return '<div class="game">' +
     '<div class="game-row">' +
@@ -301,6 +314,7 @@ function renderGameRow(game) {
     renderAvatar(home) + '<div class="team-abbr">' + kuerzelFor(home) + '</div>' +
     '<a class="res" href="' + detailUrl + '">' + text(d, "spieltoreheim") + ':' + text(d, "spieltoregast") + '</a>' +
     '<div class="team-abbr">' + kuerzelFor(away) + '</div>' + renderAvatar(away) +
+    '<span class="game-time">' + updated + '</span>' +
     '<span class="spacer"></span>' +
     '<button class="toggle" onclick="var e=document.getElementById(\'' + uid + '\');e.classList.toggle(\'open\');this.textContent=e.classList.contains(\'open\')?\'Verbergen\':\'Ereignisse\';">Ereignisse</button>' +
     '</div>' +
@@ -340,6 +354,7 @@ function run() {
       if (!candidates.length) {
         subtitle.textContent = "Aktuell läuft kein Spiel.";
         wrap.innerHTML = "";
+        markPageRefreshed();
         return;
       }
       Promise.all(candidates.map(function(c) { return checkLive(c, seasonId); })).then(function(results) {
@@ -347,10 +362,12 @@ function run() {
         if (!liveGames.length) {
           subtitle.textContent = "Aktuell läuft kein Spiel.";
           wrap.innerHTML = "";
+          markPageRefreshed();
           return;
         }
         subtitle.textContent = liveGames.length + " Spiel" + (liveGames.length > 1 ? "e" : "") + " laufen gerade";
         renderGrouped(liveGames);
+        markPageRefreshed();
       });
     });
   });
@@ -408,6 +425,7 @@ function runDemo() {
   var catCount = new Set(demoGames.map(function(g){ return categoryFor(g.league.name); })).size;
   subtitle.textContent = "Test-Modus – " + demoGames.length + " Spiele in " + catCount + " Ligen";
   renderGrouped(demoGames);
+  markPageRefreshed();
 }
 
 run();
