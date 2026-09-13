@@ -234,7 +234,10 @@ function getCurrentSeasonId() {
 function findCandidates() {
   var today = todayGerman();
   return Promise.all(LEAGUES.map(function(league) {
-    var url = WORKER + "/?path=xml/spielplan.aspx&id=" + league.id + "&typ=" + league.type + "&list=open";
+    // list=all statt list=open: so bleiben auch soeben beendete Spiele
+    // (die evtl. schon als "gespielt" markiert sind) in der Liste,
+    // damit wir sie noch bis 1 Std. nach Spielende zeigen können.
+    var url = WORKER + "/?path=xml/spielplan.aspx&id=" + league.id + "&typ=" + league.type + "&list=all";
     return fetchXml(url).then(function(doc) {
       return Array.prototype.slice.call(doc.getElementsByTagName("Spiel"))
         .filter(function(spiel) {
@@ -249,13 +252,21 @@ function findCandidates() {
   });
 }
 
+var SICHTBAR_NACH_ENDE_MS = 60 * 60 * 1000; // 1 Stunde
+
 function checkLive(candidate, seasonId) {
   var url = WORKER + "/?path=xml/liveticker.aspx&spielnr=" + candidate.spielnr + "&saisonid=" + seasonId + "&_=" + Date.now();
   return fetchXml(url).then(function(doc) {
     var started = text(doc, "spielbeginn");
     var ended = text(doc, "spielende");
-    if (started && !ended) {
-      return { doc: doc, league: candidate.league, seasonId: seasonId };
+    if (!started) return null; // noch nicht begonnen
+    if (!ended) {
+      return { doc: doc, league: candidate.league, seasonId: seasonId, status: "live" };
+    }
+    // Spiel beendet: nur zeigen, wenn letztes Update höchstens 1 Std. her ist
+    var alterMs = Date.now() - parseUpdateTime(text(doc, "last_updated"));
+    if (alterMs <= SICHTBAR_NACH_ENDE_MS) {
+      return { doc: doc, league: candidate.league, seasonId: seasonId, status: "finished" };
     }
     return null;
   }).catch(function() { return null; });
@@ -317,11 +328,15 @@ function renderGameRow(game) {
 
   // Grün blinkt nur, wenn dieses Spiel (global über alle Ligen/Spiele hinweg)
   // das zeitlich neueste Tor hat - siehe Berechnung in renderGrouped()
-  var dotClass = "dot" + (game._istNeuestesTor ? " goal" : "");
+  var dotHtml = "";
+  if (game.status === "live") {
+    var dotClass = "dot" + (game._istNeuestesTor ? " goal" : "");
+    dotHtml = '<span class="' + dotClass + '"></span>';
+  }
 
   return '<div class="game">' +
     '<div class="game-row">' +
-    '<span class="' + dotClass + '"></span>' +
+    dotHtml +
     renderAvatar(home) + '<div class="team-abbr">' + kuerzelFor(home) + '</div>' +
     '<a class="res" href="' + detailUrl + '">' + text(d, "spieltoreheim") + ':' + text(d, "spieltoregast") + '</a>' +
     '<div class="team-abbr">' + kuerzelFor(away) + '</div>' + renderAvatar(away) +
@@ -346,6 +361,7 @@ function renderGrouped(games) {
   // Nur das/die Spiel(e) mit dem zeitlich neuesten Tor blinken grün.
   var maxGoalTime = -1;
   games.forEach(function(g) {
+    if (g.status !== "live") return;
     var msgs = Array.prototype.slice.call(g.doc.getElementsByTagName("message")).reverse();
     var letztesIstTor = msgs.length > 0 && parseEvent(text(msgs[0], "text")).type === "goal";
     g._letztesIstTor = letztesIstTor;
@@ -391,15 +407,20 @@ function run() {
         return;
       }
       Promise.all(candidates.map(function(c) { return checkLive(c, seasonId); })).then(function(results) {
-        var liveGames = results.filter(function(g) { return g; });
-        if (!liveGames.length) {
+        var games = results.filter(function(g) { return g; });
+        if (!games.length) {
           subtitle.textContent = "Aktuell läuft kein Spiel.";
           wrap.innerHTML = "";
           markPageRefreshed();
           return;
         }
-        subtitle.textContent = liveGames.length + " Spiel" + (liveGames.length > 1 ? "e" : "") + " laufen gerade";
-        renderGrouped(liveGames);
+        var liveCount = games.filter(function(g) { return g.status === "live"; }).length;
+        var finishedCount = games.length - liveCount;
+        var teile = [];
+        if (liveCount > 0) teile.push(liveCount + " Spiel" + (liveCount > 1 ? "e" : "") + " laufen gerade");
+        if (finishedCount > 0) teile.push(finishedCount + " Resultat" + (finishedCount > 1 ? "e" : "") + " der letzten Stunde");
+        subtitle.textContent = teile.join(" · ");
+        renderGrouped(games);
         markPageRefreshed();
       });
     });
@@ -452,7 +473,8 @@ function runDemo() {
     return {
       doc: parser.parseFromString(makeDemoXml(cfg), "application/xml"),
       league: { name: cfg.league },
-      seasonId: "17"
+      seasonId: "17",
+      status: "live"
     };
   });
   var catCount = new Set(demoGames.map(function(g){ return categoryFor(g.league.name); })).size;
