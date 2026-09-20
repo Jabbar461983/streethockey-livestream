@@ -301,10 +301,10 @@ function checkOwnEvents(games) {
 }
 
 // ---- Einstellungspanel (Verein/Team/Ereignistypen) ----
-function toggleSettingsPanel() {
+window.toggleSettingsPanel = function() {
   var p = document.getElementById("soundPanel");
   p.style.display = (p.style.display === "none" || !p.style.display) ? "block" : "none";
-}
+};
 
 function buildClubOptions() {
   var sel = document.getElementById("selClub");
