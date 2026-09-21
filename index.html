@@ -67,18 +67,22 @@ h1{font-size:22px;font-weight:800;margin:0 0 4px;letter-spacing:-.5px}
 }
 .toggle:hover{border-color:var(--accent);color:var(--accent)}
 .header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-#soundBtn{background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;font-family:inherit;font-weight:600;padding:5px 12px;border-radius:14px;cursor:pointer;white-space:nowrap}
-#soundBtn:hover{border-color:var(--accent);color:var(--accent)}
-#soundBtn.on{border-color:#1a9c4a;color:#1a9c4a}
-#settingsBtn{background:none;border:1px solid var(--border);color:var(--muted);font-size:13px;font-family:inherit;padding:5px 9px;border-radius:14px;cursor:pointer;line-height:1}
-#settingsBtn:hover{border-color:var(--accent);color:var(--accent)}
+.icon-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:7px;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+.icon-btn.on{border-color:#1a9c4a;color:#1a9c4a}
 .sound-panel{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
-.sp-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;min-width:0}
+.sp-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;min-width:0}
 .sp-row:last-child{margin-bottom:0}
-.sp-row label{flex-shrink:0;min-width:55px;font-weight:700;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.sp-row label{flex-shrink:0;min-width:55px;padding-top:6px;font-weight:700;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
 .sp-row select{flex:1;min-width:0;width:100%;max-width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--border);font-family:inherit;font-size:13px;background:#fff;color:var(--text);box-sizing:border-box;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-teams .team-box{flex:1;min-width:0}
+.team-quick{display:flex;gap:12px;margin-bottom:6px}
+.team-quick a{font-size:11px;color:var(--accent);cursor:pointer;text-decoration:underline}
+.team-list{max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;background:#fff}
+.team-list label{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;text-transform:none}
+.team-list input{cursor:pointer;width:15px;height:15px;flex-shrink:0}
 .sp-checks{gap:16px;flex-wrap:wrap}
-.sp-checks label{display:flex;align-items:center;gap:6px;min-width:auto;text-transform:none;font-weight:500;color:var(--text);font-size:13px;cursor:pointer}
+.sp-checks label{display:flex;align-items:center;gap:6px;min-width:auto;padding-top:0;text-transform:none;font-weight:500;color:var(--text);font-size:13px;cursor:pointer}
 .sp-checks input{cursor:pointer;width:15px;height:15px}
 .events{display:none;padding:2px 14px 10px 46px;background:inherit}
 .events.open{display:block}
@@ -98,8 +102,9 @@ footer a{color:var(--accent)}
     <div class="subtitle" id="subtitle">Wird geladen …</div>
   </div>
   <div class="header-actions">
-    <button id="soundBtn" onclick="toggleSound()">🔔 Ton an</button>
-    <button id="settingsBtn" onclick="toggleSettingsPanel()" title="Ton-Einstellungen">⚙</button>
+    <button id="soundBtn" class="icon-btn" onclick="toggleSound()" title="Ton"></button>
+    <button id="vibBtn" class="icon-btn" onclick="toggleVibration()" title="Vibration"></button>
+    <button id="settingsBtn" class="icon-btn" onclick="toggleSettingsPanel()" title="Einstellungen"></button>
     <div class="page-refresh" id="pageRefresh"></div>
   </div>
 </header>
@@ -109,9 +114,12 @@ footer a{color:var(--accent)}
       <label for="selClub">Verein</label>
       <select id="selClub" onchange="onClubChange()"></select>
     </div>
-    <div class="sp-row">
-      <label for="selTeam">Team</label>
-      <select id="selTeam" onchange="onTeamChange()"></select>
+    <div class="sp-row sp-teams">
+      <label>Teams</label>
+      <div class="team-box">
+        <div class="team-quick"><a onclick="selectAllTeams()">Alle</a><a onclick="selectNoTeams()">Keine</a></div>
+        <div id="teamList" class="team-list"></div>
+      </div>
     </div>
     <div class="sp-row sp-checks">
       <label><input type="checkbox" id="chkGoals" onchange="onEventToggle()"> Tore (Hupe)</label>
@@ -150,11 +158,13 @@ var REFRESH_SECONDS = 15;
 var CATEGORY_ORDER = ["National League","Challenge League","Damen","U18","U15","U12","U9"];
 
 // ============================================================
-// Akustisches Signal: Verein/Team waehlbar, pro Ereignistyp an/aus
+// Benachrichtigungen: Verein + mehrere Teams waehlbar, pro Ereignistyp an/aus,
+// Kanal Ton und/oder Vibration
 // ============================================================
 var soundEnabled = localStorage.getItem("ssha_snd_on") !== "0";
+var vibrationEnabled = localStorage.getItem("ssha_snd_vib") === "1";
 var selectedClub = localStorage.getItem("ssha_snd_club") || "kernenried";
-var selectedTeam = localStorage.getItem("ssha_snd_team") || "";
+var selectedTeams = []; // wird nach CLUBS-Aufbau befuellt (Liste voller Teamnamen)
 var wantGoals = localStorage.getItem("ssha_snd_goals") !== "0";
 var wantPenalties = localStorage.getItem("ssha_snd_penalties") !== "0";
 var wantEnd = localStorage.getItem("ssha_snd_end") !== "0";
@@ -163,6 +173,12 @@ var prevGoals = {};
 var prevPenalties = {};
 var prevLiveIds = {};
 var CLUBS = {}; // wird nach TEAM_CLUB befuellt: slug -> {label, teams:[...]}
+
+var ICON_GEAR = '<svg viewBox="0 0 24 24" width="16" height="16"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7.2"/></g><g fill="currentColor"><rect x="11" y="1.2" width="2" height="3.6" rx="1"/><rect x="11" y="19.2" width="2" height="3.6" rx="1"/><rect x="1.2" y="11" width="3.6" height="2" rx="1"/><rect x="19.2" y="11" width="3.6" height="2" rx="1"/><rect x="4.3" y="4" width="2" height="3.6" rx="1" transform="rotate(45 5.3 5.8)"/><rect x="17.7" y="4" width="2" height="3.6" rx="1" transform="rotate(-45 18.7 5.8)"/><rect x="4.3" y="16.4" width="2" height="3.6" rx="1" transform="rotate(-45 5.3 18.2)"/><rect x="17.7" y="16.4" width="2" height="3.6" rx="1" transform="rotate(45 18.7 18.2)"/></g></svg>';
+var ICON_SOUND_ON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M18.2 6a8.6 8.6 0 010 12"/></svg>';
+var ICON_SOUND_OFF = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none"/><path d="M16 9l5 6M21 9l-5 6"/></svg>';
+var ICON_VIB_ON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="4" width="8" height="16" rx="2"/><path d="M3 9v6M1 10.5v3M21 9v6M23 10.5v3"/></svg>';
+var ICON_VIB_OFF = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="4" width="8" height="16" rx="2"/><path d="M4 3l16 18" stroke-width="1.6"/></svg>';
 
 var CLUB_LABELS = {
   "fribourg-dragons":"SHC Fribourg Dragons",
@@ -190,8 +206,24 @@ var CLUB_LABELS = {
 function updateSoundButton() {
   var btn = document.getElementById("soundBtn");
   if (!btn) return;
-  btn.textContent = soundEnabled ? "🔔 Ton an" : "🔕 Ton aus";
+  btn.innerHTML = soundEnabled ? ICON_SOUND_ON : ICON_SOUND_OFF;
   btn.classList.toggle("on", soundEnabled);
+  btn.title = soundEnabled ? "Ton ausschalten" : "Ton einschalten";
+}
+
+function updateVibButton() {
+  var btn = document.getElementById("vibBtn");
+  if (!btn) return;
+  btn.innerHTML = vibrationEnabled ? ICON_VIB_ON : ICON_VIB_OFF;
+  btn.classList.toggle("on", vibrationEnabled);
+  btn.title = vibrationEnabled ? "Vibration ausschalten" : "Vibration einschalten";
+  btn.style.display = ("vibrate" in navigator) ? "" : "none";
+}
+
+function doVibrate(pattern) {
+  if (vibrationEnabled && "vibrate" in navigator) {
+    try { navigator.vibrate(pattern); } catch (e) {}
+  }
 }
 
 function initAudio() {
@@ -220,31 +252,40 @@ function playTone(type, freq, startOffset, dauer, vol) {
 }
 
 // Tor = Hupe (zwei leicht dissonante Sägezahn-Töne, wie ein Autohorn)
-function playHornSignal(anzahl) {
-  if (!soundEnabled || !wantGoals || !audioCtx) return;
-  var n = Math.min(anzahl, 3);
-  for (var i = 0; i < n; i++) {
-    var t = i * 0.55;
-    playTone("sawtooth", 300, t, 0.42, 0.22);
-    playTone("sawtooth", 377, t, 0.42, 0.16);
+function fireGoal(anzahl) {
+  if (!wantGoals) return;
+  if (soundEnabled && audioCtx) {
+    var n = Math.min(anzahl, 3);
+    for (var i = 0; i < n; i++) {
+      var t = i * 0.55;
+      playTone("sawtooth", 300, t, 0.42, 0.22);
+      playTone("sawtooth", 377, t, 0.42, 0.16);
+    }
   }
+  doVibrate([180, 90, 180, 90, 180]);
 }
 
 // Strafe = einzelner kurzer Schiedsrichterpfiff
-function playWhistleSignal(anzahl) {
-  if (!soundEnabled || !wantPenalties || !audioCtx) return;
-  var n = Math.min(anzahl, 3);
-  for (var i = 0; i < n; i++) {
-    playTone("square", 2200, i * 0.45, 0.28, 0.18);
+function firePenalty(anzahl) {
+  if (!wantPenalties) return;
+  if (soundEnabled && audioCtx) {
+    var n = Math.min(anzahl, 3);
+    for (var i = 0; i < n; i++) {
+      playTone("square", 2200, i * 0.45, 0.28, 0.18);
+    }
   }
+  doVibrate([150]);
 }
 
 // Spielende = Abpfiff im Fussball-Stil: kurz - kurz - lang
-function playFinalWhistleSignal() {
-  if (!soundEnabled || !wantEnd || !audioCtx) return;
-  playTone("square", 2200, 0, 0.16, 0.2);
-  playTone("square", 2200, 0.26, 0.16, 0.2);
-  playTone("square", 2200, 0.52, 0.55, 0.22);
+function fireEnd() {
+  if (!wantEnd) return;
+  if (soundEnabled && audioCtx) {
+    playTone("square", 2200, 0, 0.16, 0.2);
+    playTone("square", 2200, 0.26, 0.16, 0.2);
+    playTone("square", 2200, 0.52, 0.55, 0.22);
+  }
+  doVibrate([120, 90, 120, 90, 320]);
 }
 
 window.toggleSound = function() {
@@ -256,10 +297,17 @@ window.toggleSound = function() {
   if (soundEnabled) playTone("sine", 660, 0, 0.15, 0.25); // kurze Bestaetigung beim Einschalten
 };
 
+window.toggleVibration = function() {
+  vibrationEnabled = !vibrationEnabled;
+  localStorage.setItem("ssha_snd_vib", vibrationEnabled ? "1" : "0");
+  updateVibButton();
+  if (vibrationEnabled) doVibrate([150]); // kurze Bestaetigung beim Einschalten
+};
+
 function matchesSelection(teamName) {
   if (!teamName) return false;
   if (clubSlugFor(teamName) !== selectedClub) return false;
-  return !selectedTeam || teamName === selectedTeam;
+  return selectedTeams.indexOf(teamName) !== -1;
 }
 
 function resetEventTracking() {
@@ -288,23 +336,32 @@ function checkOwnEvents(games) {
       if (e.type === "penalty") penCnt++;
     });
     var prevG = prevGoals[spielnr];
-    if (prevG !== undefined && goalCnt > prevG) playHornSignal(goalCnt - prevG);
+    if (prevG !== undefined && goalCnt > prevG) fireGoal(goalCnt - prevG);
     prevGoals[spielnr] = goalCnt;
     var prevP = prevPenalties[spielnr];
-    if (prevP !== undefined && penCnt > prevP) playWhistleSignal(penCnt - prevP);
+    if (prevP !== undefined && penCnt > prevP) firePenalty(penCnt - prevP);
     prevPenalties[spielnr] = penCnt;
   });
   Object.keys(prevLiveIds).forEach(function(nr) {
-    if (!currentLiveIds[nr]) playFinalWhistleSignal();
+    if (!currentLiveIds[nr]) fireEnd();
   });
   prevLiveIds = currentLiveIds;
 }
 
-// ---- Einstellungspanel (Verein/Team/Ereignistypen) ----
+// ---- Einstellungspanel (Verein/Teams/Ereignistypen) ----
 window.toggleSettingsPanel = function() {
   var p = document.getElementById("soundPanel");
   p.style.display = (p.style.display === "none" || !p.style.display) ? "block" : "none";
 };
+
+function defaultTeamsForClub(slug) {
+  var club = CLUBS[slug];
+  return club ? club.teams.slice() : [];
+}
+
+function saveSelectedTeams() {
+  localStorage.setItem("ssha_snd_teams", JSON.stringify(selectedTeams));
+}
 
 function buildClubOptions() {
   var sel = document.getElementById("selClub");
@@ -314,28 +371,43 @@ function buildClubOptions() {
   sel.value = selectedClub;
 }
 
-function buildTeamOptions() {
-  var sel = document.getElementById("selTeam");
-  if (!sel) return;
-  var club = CLUBS[selectedClub];
-  var teams = club ? club.teams.slice().sort() : [];
-  sel.innerHTML = '<option value="">Ganzer Verein (alle Teams)</option>' +
-    teams.map(function(t) { return '<option value="' + t.replace(/"/g, "&quot;") + '">' + t + '</option>'; }).join("");
-  sel.value = selectedTeam || "";
+function buildTeamCheckboxes() {
+  var box = document.getElementById("teamList");
+  if (!box) return;
+  var teams = defaultTeamsForClub(selectedClub).sort();
+  box.innerHTML = teams.map(function(t) {
+    var checked = selectedTeams.indexOf(t) !== -1 ? "checked" : "";
+    return '<label><input type="checkbox" value="' + t.replace(/"/g, "&quot;") + '" ' + checked + ' onchange="onTeamCheckChange()"> ' + t + '</label>';
+  }).join("");
 }
 
 window.onClubChange = function() {
   selectedClub = document.getElementById("selClub").value;
-  selectedTeam = "";
+  selectedTeams = defaultTeamsForClub(selectedClub); // Default: ganzer Verein (alle Teams angehakt)
   localStorage.setItem("ssha_snd_club", selectedClub);
-  localStorage.setItem("ssha_snd_team", "");
-  buildTeamOptions();
+  saveSelectedTeams();
+  buildTeamCheckboxes();
   resetEventTracking();
 };
 
-window.onTeamChange = function() {
-  selectedTeam = document.getElementById("selTeam").value;
-  localStorage.setItem("ssha_snd_team", selectedTeam);
+window.onTeamCheckChange = function() {
+  var box = document.getElementById("teamList");
+  selectedTeams = Array.prototype.slice.call(box.querySelectorAll("input:checked")).map(function(cb) { return cb.value; });
+  saveSelectedTeams();
+  resetEventTracking();
+};
+
+window.selectAllTeams = function() {
+  selectedTeams = defaultTeamsForClub(selectedClub);
+  saveSelectedTeams();
+  buildTeamCheckboxes();
+  resetEventTracking();
+};
+
+window.selectNoTeams = function() {
+  selectedTeams = [];
+  saveSelectedTeams();
+  buildTeamCheckboxes();
   resetEventTracking();
 };
 
@@ -349,8 +421,16 @@ window.onEventToggle = function() {
 };
 
 function initSettingsUI() {
+  // gespeicherte Team-Auswahl laden, aber nur die Teams uebernehmen, die
+  // tatsaechlich noch zum gewaehlten Verein gehoeren
+  var stored = [];
+  try { stored = JSON.parse(localStorage.getItem("ssha_snd_teams") || "[]"); } catch (e) { stored = []; }
+  var valid = defaultTeamsForClub(selectedClub);
+  var filtered = stored.filter(function(t) { return valid.indexOf(t) !== -1; });
+  selectedTeams = filtered.length ? filtered : valid;
+
   buildClubOptions();
-  buildTeamOptions();
+  buildTeamCheckboxes();
   document.getElementById("chkGoals").checked = wantGoals;
   document.getElementById("chkPenalties").checked = wantPenalties;
   document.getElementById("chkEnd").checked = wantEnd;
@@ -765,7 +845,9 @@ function runDemo() {
   markPageRefreshed();
 }
 
+document.getElementById("settingsBtn").innerHTML = ICON_GEAR;
 updateSoundButton();
+updateVibButton();
 initSettingsUI();
 run();
 setInterval(run, REFRESH_SECONDS * 1000);
