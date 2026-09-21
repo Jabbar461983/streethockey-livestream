@@ -70,6 +70,8 @@ h1{font-size:22px;font-weight:800;margin:0 0 4px;letter-spacing:-.5px}
 .icon-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:7px;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .icon-btn:hover{border-color:var(--accent);color:var(--accent)}
 .icon-btn.on{border-color:#1a9c4a;color:#1a9c4a}
+.icon-btn.unsupported{opacity:.35;cursor:not-allowed}
+.icon-btn.unsupported:hover{border-color:var(--border);color:var(--muted)}
 .sound-panel{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
 .sp-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;min-width:0}
 .sp-row:last-child{margin-bottom:0}
@@ -84,6 +86,9 @@ h1{font-size:22px;font-weight:800;margin:0 0 4px;letter-spacing:-.5px}
 .sp-checks{gap:16px;flex-wrap:wrap}
 .sp-checks label{display:flex;align-items:center;gap:6px;min-width:auto;padding-top:0;text-transform:none;font-weight:500;color:var(--text);font-size:13px;cursor:pointer}
 .sp-checks input{cursor:pointer;width:15px;height:15px}
+.sp-save-row{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:flex-end}
+.sp-save{background:var(--accent);color:#fff;border:none;font-family:inherit;font-weight:700;font-size:13px;padding:9px 18px;border-radius:8px;cursor:pointer}
+.sp-save:hover{opacity:.9}
 .events{display:none;padding:2px 14px 10px 46px;background:inherit}
 .events.open{display:block}
 .ev{font-size:12.5px;margin-bottom:6px;display:flex;align-items:flex-start;gap:7px;color:var(--text)}
@@ -125,6 +130,9 @@ footer a{color:var(--accent)}
       <label><input type="checkbox" id="chkGoals" onchange="onEventToggle()"> Tore (Hupe)</label>
       <label><input type="checkbox" id="chkPenalties" onchange="onEventToggle()"> Strafen (Pfiff)</label>
       <label><input type="checkbox" id="chkEnd" onchange="onEventToggle()"> Spielende (Abpfiff)</label>
+    </div>
+    <div class="sp-save-row">
+      <button class="sp-save" onclick="toggleSettingsPanel()">Speichern &amp; schliessen</button>
     </div>
   </div>
 </div>
@@ -214,10 +222,18 @@ function updateSoundButton() {
 function updateVibButton() {
   var btn = document.getElementById("vibBtn");
   if (!btn) return;
+  var supported = "vibrate" in navigator;
   btn.innerHTML = vibrationEnabled ? ICON_VIB_ON : ICON_VIB_OFF;
-  btn.classList.toggle("on", vibrationEnabled);
-  btn.title = vibrationEnabled ? "Vibration ausschalten" : "Vibration einschalten";
-  btn.style.display = ("vibrate" in navigator) ? "" : "none";
+  btn.classList.toggle("on", vibrationEnabled && supported);
+  if (!supported) {
+    btn.disabled = true;
+    btn.classList.add("unsupported");
+    btn.title = "Vibration wird von diesem Gerät/Browser nicht unterstützt (z.B. iPhone/Safari kennt keine Vibration im Web)";
+  } else {
+    btn.disabled = false;
+    btn.classList.remove("unsupported");
+    btn.title = vibrationEnabled ? "Vibration ausschalten" : "Vibration einschalten";
+  }
 }
 
 function doVibrate(pattern) {
