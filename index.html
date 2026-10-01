@@ -60,6 +60,7 @@ h1{font-size:22px;font-weight:800;margin:0 0 4px;letter-spacing:-.5px}
 .score-col{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0}
 .res{font-size:15px;font-weight:800;color:var(--text);text-decoration:none;padding:2px 6px;border-radius:4px}
 .res:hover{background:var(--row-alt)}
+.res.sched{font-size:13px;font-weight:700;color:var(--muted);background:var(--row-alt);padding:3px 8px}
 .game-time{font-size:10.5px;color:var(--muted);white-space:nowrap;margin-top:2px}
 .toggle{
   background:none;border:1px solid var(--border);color:var(--muted);
@@ -267,9 +268,20 @@ function playTone(type, freq, startOffset, dauer, vol) {
   osc.stop(t + dauer + 0.05);
 }
 
+// Versucht den AudioContext zu "wecken": iOS/Safari suspendiert ihn automatisch,
+// sobald die Seite in den Hintergrund geht; ohne erneutes resume() bliebe er stumm.
+function resumeAudioIfNeeded() {
+  var ctx = initAudio();
+  if (ctx && ctx.state === "suspended") {
+    try { ctx.resume(); } catch (e) {}
+  }
+  return ctx;
+}
+
 // Tor = Hupe (zwei leicht dissonante Sägezahn-Töne, wie ein Autohorn)
 function fireGoal(anzahl) {
   if (!wantGoals) return;
+  resumeAudioIfNeeded();
   if (soundEnabled && audioCtx) {
     var n = Math.min(anzahl, 3);
     for (var i = 0; i < n; i++) {
@@ -284,6 +296,7 @@ function fireGoal(anzahl) {
 // Strafe = einzelner kurzer Schiedsrichterpfiff
 function firePenalty(anzahl) {
   if (!wantPenalties) return;
+  resumeAudioIfNeeded();
   if (soundEnabled && audioCtx) {
     var n = Math.min(anzahl, 3);
     for (var i = 0; i < n; i++) {
@@ -296,6 +309,7 @@ function firePenalty(anzahl) {
 // Spielende = Abpfiff im Fussball-Stil: kurz - kurz - lang
 function fireEnd() {
   if (!wantEnd) return;
+  resumeAudioIfNeeded();
   if (soundEnabled && audioCtx) {
     playTone("square", 2200, 0, 0.16, 0.2);
     playTone("square", 2200, 0.26, 0.16, 0.2);
@@ -338,10 +352,10 @@ function resetEventTracking() {
 function checkOwnEvents(games) {
   var currentLiveIds = {};
   games.forEach(function(g) {
+    if (g.status !== "live") return;
     var home = text(g.doc, "spielheimTeamShort");
     var away = text(g.doc, "spielgastTeamShort");
     if (!matchesSelection(home) && !matchesSelection(away)) return;
-    if (g.status !== "live") return;
     var spielnr = text(g.doc, "spielnr");
     currentLiveIds[spielnr] = true;
     var goalCnt = 0, penCnt = 0;
@@ -599,12 +613,37 @@ function findCandidates() {
           return text(spiel, "datum").indexOf(today) === 0 && text(spiel, "livetickeron") === "1";
         })
         .map(function(spiel) {
-          return { spielnr: text(spiel, "spielnr"), league: league };
+          return {
+            spielnr: text(spiel, "spielnr"),
+            league: league,
+            heim: text(spiel, "heim"),
+            gast: text(spiel, "gast"),
+            datumZeit: text(spiel, "datum"),
+            ort: text(spiel, "spielort")
+          };
         });
     }).catch(function() { return []; });
   })).then(function(lists) {
     return [].concat.apply([], lists);
   });
+}
+
+// Wandelt "DD.MM.YYYY HH:MM:SS" in ein vergleichbares Date-Objekt um.
+function parseCandidateKickoff(candidate) {
+  var parts = (candidate.datumZeit || "").split(" ");
+  var datum = (parts[0] || "").split(".");
+  var zeit = (parts[1] || "0:0:0").split(":");
+  if (datum.length < 3) return null;
+  return new Date(+datum[2], +datum[1] - 1, +datum[0], +zeit[0] || 0, +zeit[1] || 0, +zeit[2] || 0);
+}
+
+function scheduledGameFromCandidate(candidate, seasonId) {
+  return {
+    candidate: candidate,
+    league: candidate.league,
+    seasonId: seasonId,
+    status: "scheduled"
+  };
 }
 
 var SICHTBAR_NACH_ENDE_MS = 60 * 60 * 1000; // 1 Stunde
@@ -614,17 +653,17 @@ function checkLive(candidate, seasonId) {
   return fetchXml(url).then(function(doc) {
     var started = text(doc, "spielbeginn");
     var ended = text(doc, "spielende");
-    if (!started) return null; // noch nicht begonnen
+    if (!started) return scheduledGameFromCandidate(candidate, seasonId); // noch nicht begonnen
     if (!ended) {
-      return { doc: doc, league: candidate.league, seasonId: seasonId, status: "live" };
+      return { doc: doc, candidate: candidate, league: candidate.league, seasonId: seasonId, status: "live" };
     }
     // Spiel beendet: nur zeigen, wenn letztes Update höchstens 1 Std. her ist
     var alterMs = Date.now() - parseUpdateTime(text(doc, "last_updated"));
     if (alterMs <= SICHTBAR_NACH_ENDE_MS) {
-      return { doc: doc, league: candidate.league, seasonId: seasonId, status: "finished" };
+      return { doc: doc, candidate: candidate, league: candidate.league, seasonId: seasonId, status: "finished" };
     }
     return null;
-  }).catch(function() { return null; });
+  }).catch(function() { return scheduledGameFromCandidate(candidate, seasonId); });
 }
 
 function parseEvent(rawText) {
@@ -681,9 +720,49 @@ function zaehleTore(allMessages, home, away) {
   return { home: homeGoals, away: awayGoals };
 }
 
-var uidCounter = 0;
+// Haelt gemerkt, welche "Ereignisse"-Panels der Nutzer von Hand geoeffnet hat.
+// Bleibt ueber den 15s-Refresh hinweg bestehen (wird nicht pro render zurueckgesetzt)
+// und schliesst sich nur noch, wenn der Nutzer selbst draufklickt.
+var openEvents = {};
+
+window.toggleEvents = function(uid) {
+  var e = document.getElementById(uid);
+  if (!e) return;
+  var nowOpen = !e.classList.contains("open");
+  e.classList.toggle("open", nowOpen);
+  openEvents[uid] = nowOpen;
+  var btn = e.previousElementSibling ? e.previousElementSibling.querySelector(".toggle") : null;
+  if (btn) btn.textContent = nowOpen ? "Verbergen" : "Ereignisse";
+};
+
+function kickoffZeit(candidate) {
+  var d = parseCandidateKickoff(candidate);
+  if (!d) return "";
+  var pad = function(n) { return (n < 10 ? "0" : "") + n; };
+  return pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+
+function renderScheduledRow(game) {
+  var c = game.candidate || {};
+  var home = c.heim || "";
+  var away = c.gast || "";
+  return '<div class="game">' +
+    '<div class="game-row">' +
+    '<div class="teams-col">' +
+      '<div class="team-line">' + renderAvatar(home) + '<span>' + home + '</span></div>' +
+      '<div class="team-line">' + renderAvatar(away) + '<span>' + away + '</span></div>' +
+    '</div>' +
+    '<div class="score-col">' +
+      '<span class="res sched">' + kickoffZeit(c) + '</span>' +
+      '<div class="game-time">' + (c.ort || "") + '</div>' +
+    '</div>' +
+    '</div>' +
+    '</div>';
+}
 
 function renderGameRow(game) {
+  if (game.status === "scheduled") return renderScheduledRow(game);
+
   var d = game.doc;
   var home = text(d, "spielheimTeamShort");
   var away = text(d, "spielgastTeamShort");
@@ -692,7 +771,8 @@ function renderGameRow(game) {
   var detailUrl = isDemo
     ? "spiel.html?demo=1"
     : "spiel.html?spielnr=" + text(d, "spielnr") + "&saisonid=" + game.seasonId;
-  var uid = "ev" + (uidCounter++);
+  var uid = "ev" + text(d, "spielnr");
+  var isOpen = !!openEvents[uid];
   var updated = text(d, "last_updated").split(" ")[1] || "";
   var tore = zaehleTore(allMessages, home, away);
 
@@ -716,9 +796,9 @@ function renderGameRow(game) {
       '<a class="res" href="' + detailUrl + '">' + tore.away + '</a>' +
       '<div class="game-time">Update: ' + updated + '</div>' +
     '</div>' +
-    '<button class="toggle" onclick="var e=document.getElementById(\'' + uid + '\');e.classList.toggle(\'open\');this.textContent=e.classList.contains(\'open\')?\'Verbergen\':\'Ereignisse\';">Ereignisse</button>' +
+    '<button class="toggle" onclick="toggleEvents(\'' + uid + '\')">' + (isOpen ? "Verbergen" : "Ereignisse") + '</button>' +
     '</div>' +
-    '<div class="events" id="' + uid + '">' + eventsHtml + '</div>' +
+    '<div class="events' + (isOpen ? " open" : "") + '" id="' + uid + '">' + eventsHtml + '</div>' +
     '</div>';
 }
 
@@ -728,6 +808,16 @@ function parseUpdateTime(lastUpdated) {
   var datum = (parts[0] || "").split(".");
   var zeit = (parts[1] || "0:0:0").split(":");
   return new Date(+datum[2], +datum[1] - 1, +datum[0], +zeit[0], +zeit[1], +zeit[2] || 0).getTime();
+}
+
+// Fuer die Sortierung innerhalb einer Liga-Sektion: Anstoss-/Update-Zeitpunkt,
+// unabhaengig vom Status (laufend/beendet/angesetzt).
+function gameSortTime(g) {
+  if (g.status === "scheduled") {
+    var d = parseCandidateKickoff(g.candidate);
+    return d ? d.getTime() : 0;
+  }
+  return parseUpdateTime(text(g.doc, "last_updated"));
 }
 
 function renderGrouped(games) {
@@ -755,12 +845,19 @@ function renderGrouped(games) {
   var categories = Object.keys(byCategory).sort(function(a, b) {
     return categoryOrderIndex(a) - categoryOrderIndex(b);
   });
-  wrap.innerHTML = '<div class="live-badge">Live</div>' + categories.map(function(cat) {
+  var hatLiveSpiel = games.some(function(g) { return g.status === "live"; });
+  wrap.innerHTML = (hatLiveSpiel ? '<div class="live-badge">Live</div>' : "") + categories.map(function(cat) {
+    var liste = byCategory[cat].slice().sort(function(a, b) { return gameSortTime(a) - gameSortTime(b); });
     return '<div class="league-section">' +
       '<div class="league-title">' + cat + ' <span class="chev">›</span></div>' +
-      '<div class="games">' + byCategory[cat].map(renderGameRow).join("") + '</div>' +
+      '<div class="games">' + liste.map(renderGameRow).join("") + '</div>' +
       '</div>';
   }).join("");
+
+  // Panels fuer Spiele, die nicht mehr angezeigt werden, nicht endlos mitschleppen
+  var aktiveIds = {};
+  games.forEach(function(g) { if (g.status !== "scheduled") aktiveIds["ev" + text(g.doc, "spielnr")] = true; });
+  Object.keys(openEvents).forEach(function(uid) { if (!aktiveIds[uid]) delete openEvents[uid]; });
 }
 
 function run() {
@@ -785,18 +882,20 @@ function run() {
         var games = results.filter(function(g) { return g; });
         if (!games.length) {
           checkOwnEvents([]);
-          subtitle.textContent = "Aktuell läuft kein Spiel.";
+          subtitle.textContent = "Heute sind keine Spiele angesetzt.";
           wrap.innerHTML = "";
           markPageRefreshed();
           return;
         }
         checkOwnEvents(games);
         var liveCount = games.filter(function(g) { return g.status === "live"; }).length;
-        var finishedCount = games.length - liveCount;
+        var finishedCount = games.filter(function(g) { return g.status === "finished"; }).length;
+        var scheduledCount = games.filter(function(g) { return g.status === "scheduled"; }).length;
         var teile = [];
         if (liveCount > 0) teile.push(liveCount + " Spiel" + (liveCount > 1 ? "e" : "") + " laufen gerade");
         if (finishedCount > 0) teile.push(finishedCount + " Resultat" + (finishedCount > 1 ? "e" : "") + " der letzten Stunde");
-        subtitle.textContent = teile.join(" · ");
+        if (scheduledCount > 0) teile.push(scheduledCount + " Spiel" + (scheduledCount > 1 ? "e" : "") + " heute noch angesetzt");
+        subtitle.textContent = teile.join(" · ") || "Heute sind keine Spiele angesetzt.";
         renderGrouped(games);
         markPageRefreshed();
       });
@@ -867,6 +966,18 @@ updateVibButton();
 initSettingsUI();
 run();
 setInterval(run, REFRESH_SECONDS * 1000);
+
+// Wenn die Seite/App wieder in den Vordergrund kommt (z.B. iPhone-Bildschirm
+// entsperrt, oder zur Home-Screen-App zurückgewechselt): AudioContext wecken
+// und sofort neu laden, statt bis zum nächsten 15s-Takt zu warten - iOS
+// pausiert Timer im Hintergrund teils komplett, dadurch kann der laufende
+// Stand sonst veraltet sein.
+document.addEventListener("visibilitychange", function() {
+  if (document.visibilityState === "visible") {
+    resumeAudioIfNeeded();
+    run();
+  }
+});
 })();
 </script>
 </body>
