@@ -209,14 +209,19 @@ function renderEvent(time, rawText) {
 }
 
 function zaehleTore(allMessages, home, away) {
-  var homeGoals = 0, awayGoals = 0;
+  // Spielstand aus der neuesten Tor-Meldung ("Neuer Spielstand X:Y") uebernehmen.
+  // Der Abgleich ueber Teamnamen war fehleranfaellig: SSHA fuehrt teils abweichende
+  // Kurznamen (z.B. "U15C" statt "U12"), dann wurden Tore nicht zugeordnet.
+  var best = null, bestSum = -1;
   allMessages.forEach(function(m) {
     var e = parseEvent(text(m, "text"));
-    if (e.type !== "goal") return;
-    if (home.indexOf(e.team) !== -1 || e.team.indexOf(home) !== -1) homeGoals++;
-    else if (away.indexOf(e.team) !== -1 || e.team.indexOf(away) !== -1) awayGoals++;
+    if (e.type !== "goal" || !e.score) return;
+    var p = e.score.split(":");
+    var h = parseInt(p[0], 10), a = parseInt(p[1], 10);
+    if (isNaN(h) || isNaN(a)) return;
+    if (h + a > bestSum) { bestSum = h + a; best = { home: h, away: a }; }
   });
-  return { home: homeGoals, away: awayGoals };
+  return best || { home: 0, away: 0 };
 }
 
 function render(d) {

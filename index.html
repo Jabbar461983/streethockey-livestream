@@ -164,6 +164,38 @@ var LEAGUES = [
 ];
 
 var REFRESH_SECONDS = 15;
+
+// Automatische Aktualisierung nur zwischen 08:30 und 22:30 Uhr (Schweizer Zeit).
+// Der erste Seitenaufruf laedt immer, damit die Seite nie leer bleibt.
+var UPDATE_START_MIN = 8 * 60 + 30;
+var UPDATE_END_MIN = 22 * 60 + 30;
+var firstLoadDone = false;
+var dayLoaded = ""; // Datum (TT.MM.JJJJ) des letzten Ladens - fuer den Tageswechsel um 00:01
+function zurichNow() {
+  var h = 0, m = 0, d = "", mo = "", y = "";
+  try {
+    new Intl.DateTimeFormat("de-CH", { timeZone: "Europe/Zurich", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })
+      .formatToParts(new Date()).forEach(function(p) {
+        if (p.type === "hour") h = parseInt(p.value, 10) % 24;
+        if (p.type === "minute") m = parseInt(p.value, 10);
+        if (p.type === "day") d = p.value;
+        if (p.type === "month") mo = p.value;
+        if (p.type === "year") y = p.value;
+      });
+  } catch (e) {
+    var n = new Date(), pad = function(x) { return (x < 10 ? "0" : "") + x; };
+    h = n.getHours(); m = n.getMinutes(); d = pad(n.getDate()); mo = pad(n.getMonth() + 1); y = String(n.getFullYear());
+  }
+  return { min: h * 60 + m, date: d + "." + mo + "." + y };
+}
+// Aktualisieren erlaubt: 08:30-22:30, ausserdem einmal pro Tag ab 00:01, um den
+// heutigen Spielplan aller Ligen zu laden (Spiele erscheinen dann bis zum Start).
+function updateAllowed() {
+  var z = zurichNow();
+  if (z.min >= UPDATE_START_MIN && z.min < UPDATE_END_MIN) return true;
+  return dayLoaded !== z.date && z.min >= 1;
+}
+
 var CATEGORY_ORDER = ["National League","Challenge League","Damen","U18","U15","U12","U9"];
 
 // ============================================================
@@ -576,9 +608,7 @@ function text(node, tag) {
 }
 
 function todayGerman() {
-  var d = new Date();
-  var pad = function(n) { return (n < 10 ? "0" : "") + n; };
-  return pad(d.getDate()) + "." + pad(d.getMonth() + 1) + "." + d.getFullYear();
+  return zurichNow().date;
 }
 
 function fetchXml(url) {
@@ -710,14 +740,19 @@ function categoryOrderIndex(category) {
 // separate Zahlen-Feld von SSHA zu uebernehmen, das gelegentlich schon
 // aktualisiert ist, bevor die zugehoerige Tor-Meldung eingetragen wurde).
 function zaehleTore(allMessages, home, away) {
-  var homeGoals = 0, awayGoals = 0;
+  // Spielstand aus der neuesten Tor-Meldung ("Neuer Spielstand X:Y") uebernehmen.
+  // Der Abgleich ueber Teamnamen war fehleranfaellig: SSHA fuehrt teils abweichende
+  // Kurznamen (z.B. "U15C" statt "U12"), dann wurden Tore nicht zugeordnet.
+  var best = null, bestSum = -1;
   allMessages.forEach(function(m) {
     var e = parseEvent(text(m, "text"));
-    if (e.type !== "goal") return;
-    if (home.indexOf(e.team) !== -1 || e.team.indexOf(home) !== -1) homeGoals++;
-    else if (away.indexOf(e.team) !== -1 || e.team.indexOf(away) !== -1) awayGoals++;
+    if (e.type !== "goal" || !e.score) return;
+    var p = e.score.split(":");
+    var h = parseInt(p[0], 10), a = parseInt(p[1], 10);
+    if (isNaN(h) || isNaN(a)) return;
+    if (h + a > bestSum) { bestSum = h + a; best = { home: h, away: a }; }
   });
-  return { home: homeGoals, away: awayGoals };
+  return best || { home: 0, away: 0 };
 }
 
 // Haelt gemerkt, welche "Ereignisse"-Panels der Nutzer von Hand geoeffnet hat.
@@ -865,6 +900,9 @@ function run() {
     runDemo();
     return;
   }
+  if (firstLoadDone && !updateAllowed()) return; // ausserhalb 08:30-22:30 nur Tageswechsel-Laden ab 00:01
+  firstLoadDone = true;
+  dayLoaded = zurichNow().date;
   getCurrentSeasonId().then(function(seasonId) {
     if (!seasonId) {
       subtitle.textContent = "Saison konnte nicht ermittelt werden.";
