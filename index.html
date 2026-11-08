@@ -630,8 +630,11 @@ function getCurrentSeasonId() {
   });
 }
 
+var failedLeagues = 0; // Ligen, deren Spielplan nicht geladen werden konnte
+
 function findCandidates() {
   var today = todayGerman();
+  failedLeagues = 0;
   return Promise.all(LEAGUES.map(function(league) {
     // list=all statt list=open: so bleiben auch soeben beendete Spiele
     // (die evtl. schon als "gespielt" markiert sind) in der Liste,
@@ -640,7 +643,7 @@ function findCandidates() {
     return fetchXml(url).then(function(doc) {
       return Array.prototype.slice.call(doc.getElementsByTagName("Spiel"))
         .filter(function(spiel) {
-          return text(spiel, "datum").indexOf(today) === 0 && text(spiel, "livetickeron") === "1";
+          return text(spiel, "datum").indexOf(today) === 0; // ALLE Spiele des Tages, auch ohne Liveticker
         })
         .map(function(spiel) {
           return {
@@ -649,10 +652,13 @@ function findCandidates() {
             heim: text(spiel, "heim"),
             gast: text(spiel, "gast"),
             datumZeit: text(spiel, "datum"),
-            ort: text(spiel, "spielort")
+            ort: text(spiel, "spielort"),
+            ticker: text(spiel, "livetickeron") === "1",
+            gespielt: text(spiel, "gespielt") === "1",
+            resultat: text(spiel, "resultat")
           };
         });
-    }).catch(function() { return []; });
+    }).catch(function() { failedLeagues++; return []; });
   })).then(function(lists) {
     return [].concat.apply([], lists);
   });
@@ -676,24 +682,41 @@ function scheduledGameFromCandidate(candidate, seasonId) {
   };
 }
 
-var SICHTBAR_NACH_ENDE_MS = 60 * 60 * 1000; // 1 Stunde
+// Beendete Spiele aendern sich nicht mehr: einmal geladen, nicht mehr neu abrufen.
+var finishedCache = {};
+var TICKER_VORLAUF_MS = 20 * 60 * 1000; // Ticker erst ab 20 Min. vor Anspielzeit abfragen
 
 function checkLive(candidate, seasonId) {
+  // Spiele ohne Liveticker (z.B. viele Junioren-Turniere): nur Spielplan-Daten
+  if (!candidate.ticker) {
+    if (candidate.gespielt) return Promise.resolve({ candidate: candidate, league: candidate.league, seasonId: seasonId, status: "result" });
+    return Promise.resolve(scheduledGameFromCandidate(candidate, seasonId));
+  }
+  if (finishedCache[candidate.spielnr]) return Promise.resolve(finishedCache[candidate.spielnr]);
+  // Spiel liegt noch weit in der Zukunft: kein Ticker-Abruf noetig
+  var ko = parseCandidateKickoff(candidate);
+  if (!candidate.gespielt && ko && ko.getTime() - Date.now() > TICKER_VORLAUF_MS) {
+    return Promise.resolve(scheduledGameFromCandidate(candidate, seasonId));
+  }
   var url = WORKER + "/?path=xml/liveticker.aspx&spielnr=" + candidate.spielnr + "&saisonid=" + seasonId + "&_=" + Date.now();
   return fetchXml(url).then(function(doc) {
     var started = text(doc, "spielbeginn");
     var ended = text(doc, "spielende");
-    if (!started) return scheduledGameFromCandidate(candidate, seasonId); // noch nicht begonnen
+    if (!started) {
+      // Spielplan sagt "gespielt", Ticker leer: Resultat aus dem Spielplan zeigen
+      if (candidate.gespielt) return { candidate: candidate, league: candidate.league, seasonId: seasonId, status: "result" };
+      return scheduledGameFromCandidate(candidate, seasonId); // noch nicht begonnen
+    }
     if (!ended) {
       return { doc: doc, candidate: candidate, league: candidate.league, seasonId: seasonId, status: "live" };
     }
-    // Spiel beendet: nur zeigen, wenn letztes Update höchstens 1 Std. her ist
-    var alterMs = Date.now() - parseUpdateTime(text(doc, "last_updated"));
-    if (alterMs <= SICHTBAR_NACH_ENDE_MS) {
-      return { doc: doc, candidate: candidate, league: candidate.league, seasonId: seasonId, status: "finished" };
-    }
-    return null;
-  }).catch(function() { return scheduledGameFromCandidate(candidate, seasonId); });
+    var g = { doc: doc, candidate: candidate, league: candidate.league, seasonId: seasonId, status: "finished" };
+    finishedCache[candidate.spielnr] = g; // beendete Spiele bleiben den ganzen Tag sichtbar
+    return g;
+  }).catch(function() {
+    if (candidate.gespielt) return { candidate: candidate, league: candidate.league, seasonId: seasonId, status: "result" };
+    return scheduledGameFromCandidate(candidate, seasonId);
+  });
 }
 
 function parseEvent(rawText) {
@@ -781,6 +804,18 @@ function renderScheduledRow(game) {
   var c = game.candidate || {};
   var home = c.heim || "";
   var away = c.gast || "";
+  var scoreHtml, infoParts = [];
+  if (game.status === "result") {
+    var p = (c.resultat || "").split(":");
+    var hs = (p[0] || "").trim(), as = (p[1] || "").trim();
+    if (!hs && !as) { hs = "–"; as = "–"; }
+    scoreHtml = '<span class="res">' + hs + '</span><span class="res">' + as + '</span>';
+    infoParts.push("Endresultat");
+  } else {
+    scoreHtml = '<span class="res sched">' + kickoffZeit(c) + '</span>';
+    if (!c.ticker) infoParts.push("Kein Liveticker");
+  }
+  if (c.ort) infoParts.push(c.ort);
   return '<div class="game">' +
     '<div class="game-row">' +
     '<div class="teams-col">' +
@@ -788,15 +823,15 @@ function renderScheduledRow(game) {
       '<div class="team-line">' + renderAvatar(away) + '<span>' + away + '</span></div>' +
     '</div>' +
     '<div class="score-col">' +
-      '<span class="res sched">' + kickoffZeit(c) + '</span>' +
-      '<div class="game-time">' + (c.ort || "") + '</div>' +
+      scoreHtml +
+      '<div class="game-time">' + infoParts.join(" · ") + '</div>' +
     '</div>' +
     '</div>' +
     '</div>';
 }
 
 function renderGameRow(game) {
-  if (game.status === "scheduled") return renderScheduledRow(game);
+  if (!game.doc) return renderScheduledRow(game); // scheduled oder result (ohne Ticker-Daten)
 
   var d = game.doc;
   var home = text(d, "spielheimTeamShort");
@@ -848,11 +883,11 @@ function parseUpdateTime(lastUpdated) {
 // Fuer die Sortierung innerhalb einer Liga-Sektion: Anstoss-/Update-Zeitpunkt,
 // unabhaengig vom Status (laufend/beendet/angesetzt).
 function gameSortTime(g) {
-  if (g.status === "scheduled") {
+  if (g.candidate) {
     var d = parseCandidateKickoff(g.candidate);
-    return d ? d.getTime() : 0;
+    if (d) return d.getTime();
   }
-  return parseUpdateTime(text(g.doc, "last_updated"));
+  return g.doc ? parseUpdateTime(text(g.doc, "last_updated")) : 0;
 }
 
 function renderGrouped(games) {
@@ -891,7 +926,7 @@ function renderGrouped(games) {
 
   // Panels fuer Spiele, die nicht mehr angezeigt werden, nicht endlos mitschleppen
   var aktiveIds = {};
-  games.forEach(function(g) { if (g.status !== "scheduled") aktiveIds["ev" + text(g.doc, "spielnr")] = true; });
+  games.forEach(function(g) { if (g.doc) aktiveIds["ev" + text(g.doc, "spielnr")] = true; });
   Object.keys(openEvents).forEach(function(uid) { if (!aktiveIds[uid]) delete openEvents[uid]; });
 }
 
@@ -911,7 +946,7 @@ function run() {
     findCandidates().then(function(candidates) {
       if (!candidates.length) {
         checkOwnEvents([]);
-        subtitle.textContent = "Aktuell läuft kein Spiel.";
+        subtitle.textContent = failedLeagues ? "Spielplan konnte nicht vollständig geladen werden." : "Heute sind keine Spiele angesetzt.";
         wrap.innerHTML = "";
         markPageRefreshed();
         return;
@@ -927,13 +962,15 @@ function run() {
         }
         checkOwnEvents(games);
         var liveCount = games.filter(function(g) { return g.status === "live"; }).length;
-        var finishedCount = games.filter(function(g) { return g.status === "finished"; }).length;
+        var finishedCount = games.filter(function(g) { return g.status === "finished" || g.status === "result"; }).length;
         var scheduledCount = games.filter(function(g) { return g.status === "scheduled"; }).length;
         var teile = [];
         if (liveCount > 0) teile.push(liveCount + " Spiel" + (liveCount > 1 ? "e" : "") + " laufen gerade");
-        if (finishedCount > 0) teile.push(finishedCount + " Resultat" + (finishedCount > 1 ? "e" : "") + " der letzten Stunde");
-        if (scheduledCount > 0) teile.push(scheduledCount + " Spiel" + (scheduledCount > 1 ? "e" : "") + " heute noch angesetzt");
-        subtitle.textContent = teile.join(" · ") || "Heute sind keine Spiele angesetzt.";
+        if (scheduledCount > 0) teile.push(scheduledCount + " noch angesetzt");
+        if (finishedCount > 0) teile.push(finishedCount + " beendet");
+        var txt = teile.join(" · ") || "Heute sind keine Spiele angesetzt.";
+        if (failedLeagues) txt += " (" + failedLeagues + " Liga" + (failedLeagues > 1 ? "en" : "") + " nicht ladbar)";
+        subtitle.textContent = txt;
         renderGrouped(games);
         markPageRefreshed();
       });
