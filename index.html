@@ -632,6 +632,33 @@ function getCurrentSeasonId() {
 
 var failedLeagues = 0; // Ligen, deren Spielplan nicht geladen werden konnte
 
+// Saison-ID aendert sich praktisch nie: pro Tag nur einmal abfragen
+// (spart eine Worker-Anfrage bei jeder 15-s-Aktualisierung).
+var seasonCache = { id: "", day: "" };
+function getSeasonIdCached() {
+  var day = zurichNow().date;
+  if (seasonCache.id && seasonCache.day === day) return Promise.resolve(seasonCache.id);
+  return getCurrentSeasonId().then(function(id) {
+    if (id) seasonCache = { id: id, day: day };
+    return id;
+  }).catch(function() { return seasonCache.id; });
+}
+
+// Spielplan aller 15 Ligen nur alle 5 Minuten (und bei Tageswechsel) laden statt alle
+// 15 Sekunden - das waere der groesste Posten im Gratis-Limit von 100'000 Worker-Anfragen/Tag.
+// Alle 15 s werden nur noch die Ticker der laufenden Spiele abgefragt.
+var candCache = { list: null, at: 0, day: "" };
+var CAND_TTL_MS = 5 * 60 * 1000;
+function findCandidatesCached() {
+  var day = zurichNow().date, now = Date.now();
+  if (candCache.list && candCache.day === day && now - candCache.at < CAND_TTL_MS) return Promise.resolve(candCache.list);
+  return findCandidates().then(function(list) {
+    // Bei Teilfehlern (Liga nicht ladbar) schon nach ~60 s erneut versuchen
+    candCache = { list: list, at: failedLeagues ? now - CAND_TTL_MS + 60000 : now, day: day };
+    return list;
+  });
+}
+
 function findCandidates() {
   var today = todayGerman();
   failedLeagues = 0;
@@ -938,12 +965,12 @@ function run() {
   if (firstLoadDone && !updateAllowed()) return; // ausserhalb 08:30-22:30 nur Tageswechsel-Laden ab 00:01
   firstLoadDone = true;
   dayLoaded = zurichNow().date;
-  getCurrentSeasonId().then(function(seasonId) {
+  getSeasonIdCached().then(function(seasonId) {
     if (!seasonId) {
       subtitle.textContent = "Saison konnte nicht ermittelt werden.";
       return;
     }
-    findCandidates().then(function(candidates) {
+    findCandidatesCached().then(function(candidates) {
       if (!candidates.length) {
         checkOwnEvents([]);
         subtitle.textContent = failedLeagues ? "Spielplan konnte nicht vollständig geladen werden." : "Heute sind keine Spiele angesetzt.";
@@ -1040,7 +1067,13 @@ updateSoundButton();
 updateVibButton();
 initSettingsUI();
 run();
-setInterval(run, REFRESH_SECONDS * 1000);
+// Tab im Hintergrund: nur jede 4. Runde (also alle 60 s) statt alle 15 s.
+// Beim Zurueckkehren laedt der visibilitychange-Handler sofort neu.
+var hiddenTicks = 0;
+setInterval(function() {
+  if (document.hidden) { hiddenTicks++; if (hiddenTicks % 4 !== 0) return; } else { hiddenTicks = 0; }
+  run();
+}, REFRESH_SECONDS * 1000);
 
 // Wenn die Seite/App wieder in den Vordergrund kommt (z.B. iPhone-Bildschirm
 // entsperrt, oder zur Home-Screen-App zurückgewechselt): AudioContext wecken
