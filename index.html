@@ -191,7 +191,7 @@ footer a{color:var(--accent)}
 <div class="wrap" id="wrap"></div>
 <div class="views" id="views" style="display:none"></div>
 
-<footer>Daten: <a href="https://www.swiss-streethockey.ch" target="_blank" rel="noopener">Swiss Streethockey</a> · Aktualisiert sich automatisch alle 15 Sekunden</footer>
+<footer>Daten: <a href="https://www.swiss-streethockey.ch" target="_blank" rel="noopener">Swiss Streethockey</a> · Aktualisiert sich automatisch alle 15 Sekunden<br>Anonyme Besucherstatistik ohne Cookies</footer>
 
 <script>
 (function(){
@@ -199,16 +199,16 @@ var WORKER = "https://crimson-shadow-9fa2.ch-nessier.workers.dev";
 
 var LEAGUES = [
   {id:292,  type:"liga",     name:"National League"},
-  {id:300,  type:"liga",     name:"Swiss Cup"},
+  {id:300,  type:"liga",     cup:true, name:"Swiss Cup"},
   {id:291,  type:"liga",     name:"Challenge League"},
   {id:2104, type:"division", name:"Classic League 2 – Ost"},
   {id:2105, type:"division", name:"Classic League 2 – West"},
   {id:295,  type:"liga",     name:"Damen"},
   {id:296,  type:"liga",     name:"U18"},
-  {id:302,  type:"liga",     name:"Cup U15"},
+  {id:302,  type:"liga",     cup:true, name:"Cup U15"},
   {id:2109, type:"division", name:"U15 – Grossfeld"},
   {id:2108, type:"division", name:"U15 – Kleinfeld"},
-  {id:301,  type:"liga",     name:"Cup U12"},
+  {id:301,  type:"liga",     cup:true, name:"Cup U12"},
   {id:2110, type:"division", name:"U12 – Grossfeld"},
   {id:2111, type:"division", name:"U12 – Kleinfeld"},
   {id:2113, type:"division", name:"U9 – Region A"},
@@ -1294,6 +1294,7 @@ function loadTabelle() { return getXml("tab" + league().id, "path=xml/tabelle.as
   }; })};
 }); }
 function vTabelle(done) {
+  if (league().cup) return done('<div class="card"><div class="note">Für Cup-Wettbewerbe gibt es keine Tabelle.</div></div>');
   loadTabelle().then(function(t) {
     if (!t.rows.length) return done('<div class="card"><div class="note">Keine Tabelle vorhanden.</div></div>');
     var h = '<div class="card"><div class="tr head"><span class="rk">#</span><span class="nm">Team</span><span class="n">Sp</span><span class="n w">Tore</span><span class="n">Diff</span><span class="n">Pkt</span></div>';
@@ -1607,5 +1608,6 @@ window.strSub = function(v) { state.strSub = v; render(); };
 window.__stats = {analyzeGame: analyzeGame, parseMatch: parseMatch};
 })();
 </script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "a786264fe6614301adef1874776e57f9"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
