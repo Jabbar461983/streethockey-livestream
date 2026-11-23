@@ -99,6 +99,53 @@ h1{font-size:22px;font-weight:800;margin:0 0 4px;letter-spacing:-.5px}
 .empty{max-width:820px;margin:60px auto;text-align:center;color:var(--muted);font-size:15px}
 footer{max-width:820px;margin:32px auto 0;text-align:center;font-size:12px;color:var(--muted)}
 footer a{color:var(--accent)}
+
+.menu-wrap{position:relative;flex-basis:100%;display:flex;justify-content:flex-end}
+.menu-btn{display:flex;align-items:center;gap:6px;background:var(--text);color:#fff;border:none;font-family:inherit;font-weight:700;font-size:13px;padding:0 12px;height:32px;border-radius:16px;cursor:pointer}
+.menu-btn svg{flex-shrink:0}
+.menu-list{display:none;position:absolute;right:0;top:38px;z-index:20;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.15);min-width:170px;overflow:hidden}
+.menu-list.open{display:block}
+.mgrp{padding:8px 16px 4px;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;background:#f6f6f6;border-top:1px solid var(--border)}
+.menu-list button{display:block;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--border);font-family:inherit;font-size:15px;font-weight:600;padding:13px 16px;cursor:pointer;color:var(--text)}
+.menu-list button:last-child{border-bottom:none}
+.menu-list button.act{color:var(--accent);background:#fdf0f1}
+.page-refresh{flex-basis:100%;text-align:right;padding-top:0}
+.views{max-width:820px;margin:0 auto}
+.vbar{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.vbar select{flex:1;min-width:0;padding:10px 10px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:15px;font-weight:700;background:#fff;color:var(--text)}
+.chips{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.chip{border:1px solid var(--border);background:#fff;color:var(--text);font-family:inherit;font-size:13px;font-weight:600;padding:7px 12px;border-radius:16px;cursor:pointer}
+.chip.act{background:var(--text);color:#fff;border-color:var(--text)}
+.card{background:var(--card);border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,.06);overflow:hidden;margin-bottom:14px}
+.card h3{margin:0;padding:12px 14px 4px;font-size:15px;font-weight:800}
+.card .hint{padding:0 14px 8px;font-size:12px;color:var(--muted)}
+.tr{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--border);font-size:14px}
+.tr:nth-child(even){background:var(--row-alt)}
+.tr.head{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;padding:6px 14px;background:none!important;border-top:none}
+.tr .rk{width:22px;color:var(--muted);font-weight:700;flex-shrink:0;text-align:right}
+.tr .nm{flex:1;min-width:0;font-weight:600}
+.tr .nm span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr .nm small{display:block;font-size:11px;color:var(--muted);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr .n{white-space:nowrap;width:34px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+.tr .n.w{width:62px}
+.tr .n.b{font-weight:800}
+.tr.cut{border-top:2px solid var(--accent)}
+.tr.click{cursor:pointer}
+.tr.click:hover{background:#f7e9ea}
+.barbg{height:6px;background:#e6e6e6;border-radius:3px;margin-top:5px;overflow:hidden}
+.barfg{height:100%;background:var(--accent);border-radius:3px}
+.sub{padding:2px 14px 10px 44px;background:#fafafa;border-top:1px solid var(--border)}
+.sub .tr{padding:7px 0;font-size:13px}
+.more{display:block;width:calc(100% - 28px);margin:10px 14px 14px;padding:10px;background:#fff;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;color:var(--text)}
+.note{padding:14px;color:var(--muted);font-size:13px;text-align:center}
+.prog{height:6px;background:#e6e6e6;border-radius:3px;margin:8px 14px 12px;overflow:hidden}
+.prog>div{height:100%;background:var(--accent);width:0;transition:width .2s}
+.gd{padding:8px 14px 2px;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;background:#f0f0f0}
+.gm{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--border);font-size:13.5px}
+.gm .tm{width:42px;font-size:12px;color:var(--muted);flex-shrink:0}
+.gm .tt{flex:1;min-width:0;font-weight:600}
+.gm .tt span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gm .rs{font-weight:800;text-align:right;flex-shrink:0;color:var(--text);text-decoration:none}
 </style>
 </head>
 <body>
@@ -108,6 +155,10 @@ footer a{color:var(--accent)}
     <div class="subtitle" id="subtitle">Wird geladen …</div>
   </div>
   <div class="header-actions">
+    <div class="menu-wrap">
+      <button id="menuBtn" class="menu-btn" onclick="toggleMenu(event)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg><span id="menuLabel">Liveticker</span></button>
+      <div id="menuList" class="menu-list"></div>
+    </div>
     <button id="soundBtn" class="icon-btn" onclick="toggleSound()" title="Ton"></button>
     <button id="vibBtn" class="icon-btn" onclick="toggleVibration()" title="Vibration"></button>
     <button id="settingsBtn" class="icon-btn" onclick="toggleSettingsPanel()" title="Einstellungen"></button>
@@ -138,6 +189,7 @@ footer a{color:var(--accent)}
   </div>
 </div>
 <div class="wrap" id="wrap"></div>
+<div class="views" id="views" style="display:none"></div>
 
 <footer>Daten: <a href="https://www.swiss-streethockey.ch" target="_blank" rel="noopener">Swiss Streethockey</a> · Aktualisiert sich automatisch alle 15 Sekunden</footer>
 
@@ -958,6 +1010,7 @@ function renderGrouped(games) {
 }
 
 function run() {
+  if (window.__view && window.__view !== "ticker") return; // andere Ansicht aktiv: kein Ticker-Abruf
   if (new URLSearchParams(location.search).get("demo")) {
     runDemo();
     return;
@@ -1062,6 +1115,7 @@ function runDemo() {
   markPageRefreshed();
 }
 
+window.__app = {run:run, season:getSeasonIdCached, fetchXml:fetchXml, text:text, WORKER:WORKER, LEAGUES:LEAGUES, avatar:renderAvatar};
 document.getElementById("settingsBtn").innerHTML = ICON_GEAR;
 updateSoundButton();
 updateVibButton();
@@ -1086,6 +1140,471 @@ document.addEventListener("visibilitychange", function() {
     run();
   }
 });
+})();
+</script>
+<script>
+(function(){
+var A = window.__app;
+var WORKER = A.WORKER, LEAGUES = A.LEAGUES, text = A.text;
+var VIEWS = [
+  {id:"ticker", name:"Liveticker"},
+  {id:"spiele", name:"Spiele"},
+  {id:"tabelle", name:"Tabelle"},
+  {id:"scorer", name:"Scorer"},
+  {id:"strafen", name:"Strafen"},
+  {id:"statistik", name:"Statistik"}
+];
+window.__view = "ticker";
+var state = {league: 0, spFilter: "", scAll: false, stSub: "pp", openTeams: {}, strafAll: false};
+try { var sv = parseInt(localStorage.getItem("viewLeague"), 10); if (sv >= 0 && sv < LEAGUES.length) state.league = sv; } catch (e) {}
+
+var menuBtn = document.getElementById("menuBtn"), menuList = document.getElementById("menuList");
+var menuLabel = document.getElementById("menuLabel");
+var wrapEl = document.getElementById("wrap"), viewsEl = document.getElementById("views");
+var panel = document.getElementById("soundPanel");
+var subtitle = document.getElementById("subtitle");
+
+function esc(s) { return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function num(s) { var n = parseFloat(String(s).replace(",", ".")); return isNaN(n) ? 0 : n; }
+function kids(doc, tag) { return Array.prototype.slice.call(doc.getElementsByTagName(tag)); }
+function league() { return LEAGUES[state.league]; }
+
+// ---------- Cache (Speicher, 10 Min) ----------
+var token = 0;
+var mem = {};
+var TTL = 10 * 60 * 1000;
+function getXml(key, url) {
+  var c = mem[key];
+  if (c && Date.now() - c.t < TTL) return c.p;
+  var p = A.fetchXml(WORKER + "/?" + url);
+  mem[key] = {t: Date.now(), p: p};
+  p.catch(function() { delete mem[key]; });
+  return p;
+}
+function lg(l) { return "id=" + l.id + "&typ=" + l.type; }
+
+// ---------- Menue ----------
+var LOCK = "\uD83D\uDD12 ";
+function buildMenu() {
+  menuList.innerHTML = VIEWS.map(function(v) {
+    var pre = v.id === "ticker" ? "" : (unlocked ? "" : LOCK);
+    var head = v.id === "spiele" ? '<div class="mgrp">Liveticker +</div>' : "";
+    return head + '<button data-v="' + v.id + '" onclick="setView(\'' + v.id + '\')">' + pre + v.name + '</button>';
+  }).join("");
+  Array.prototype.forEach.call(menuList.querySelectorAll("button"), function(b) { b.classList.toggle("act", b.getAttribute("data-v") === window.__view); });
+}
+// ---------- Liveticker + : Zugangscode (liveticker-plus.json im Repo) ----------
+var unlocked = false;
+function sha256hex(str) {
+  if (!(window.crypto && crypto.subtle)) return Promise.resolve("");
+  return crypto.subtle.digest("SHA-256", new TextEncoder().encode(str)).then(function(b) {
+    return Array.prototype.map.call(new Uint8Array(b), function(x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+  });
+}
+function codeMatches(entered) {
+  entered = String(entered || "").trim();
+  if (!entered) return Promise.resolve(false);
+  return fetch("liveticker-plus.json?t=" + Date.now(), {cache: "no-store"}).then(function(r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }).then(function(j) {
+    var c = String(j && j.code != null ? j.code : "").trim();
+    if (!c) return false;
+    if (/^[0-9a-f]{64}$/i.test(c)) return sha256hex(entered).then(function(h) { return h === c.toLowerCase(); });
+    return entered === c;
+  });
+}
+function storedCode() { try { return localStorage.getItem("lpCode") || ""; } catch (e) { return ""; } }
+function gate(ok) {
+  if (unlocked) return ok();
+  var my = ++token;
+  viewsEl.innerHTML = loading("Zugang wird geprüft …");
+  var sc = storedCode();
+  (sc ? codeMatches(sc).catch(function() { return false; }) : Promise.resolve(false)).then(function(good) {
+    if (my !== token) return;
+    if (good) { unlocked = true; buildMenu(); return ok(); }
+    try { localStorage.removeItem("lpCode"); } catch (e) {}
+    showCodeForm("");
+  });
+}
+function showCodeForm(err) {
+  viewsEl.innerHTML = '<div class="card"><h3>Liveticker +</h3><div class="hint">Tabellen, Scorer, Strafen und Statistiken sind nur mit Zugangscode verfügbar.</div>' +
+    '<div class="vbar" style="padding:0 14px 6px"><input id="lpInput" type="password" autocomplete="off" placeholder="Code" onkeydown="if(event.key===\'Enter\')lpSubmit()" style="flex:1;min-width:0;padding:10px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:16px"><button class="chip act" onclick="lpSubmit()">Freischalten</button></div>' +
+    '<div class="hint" id="lpErr" style="color:var(--accent)">' + esc(err) + '</div></div>';
+}
+window.lpSubmit = function() {
+  var v = document.getElementById("lpInput").value;
+  codeMatches(v).then(function(good) {
+    if (good) {
+      try { localStorage.setItem("lpCode", v.trim()); } catch (e) {}
+      unlocked = true; buildMenu(); render();
+    } else showCodeForm("Code falsch.");
+  }).catch(function() { showCodeForm("Code konnte nicht geprüft werden."); });
+};
+buildMenu();
+window.toggleMenu = function(ev) { ev.stopPropagation(); menuList.classList.toggle("open"); };
+document.addEventListener("click", function() { menuList.classList.remove("open"); });
+
+window.setView = function(id) {
+  menuList.classList.remove("open");
+  window.__view = id;
+  var v = VIEWS.filter(function(x) { return x.id === id; })[0];
+  menuLabel.textContent = v.name;
+  if (id === "ticker") {
+    token++; buildMenu();
+    viewsEl.style.display = "none"; wrapEl.style.display = "";
+    A.run();
+    return;
+  }
+  panel.style.display = "none";
+  wrapEl.style.display = "none"; viewsEl.style.display = "";
+  subtitle.textContent = "Liveticker + · " + v.name;
+  buildMenu();
+  gate(render);
+};
+window.setLeague = function(i) {
+  state.league = parseInt(i, 10);
+  state.scAll = false; state.openTeams = {}; state.strafAll = false; state.spFilter = "";
+  try { localStorage.setItem("viewLeague", state.league); } catch (e) {}
+  render();
+};
+
+function leagueBar() {
+  return '<div class="vbar"><select onchange="setLeague(this.value)">' + LEAGUES.map(function(l, i) {
+    return '<option value="' + i + '"' + (i === state.league ? " selected" : "") + ">" + esc(l.name) + "</option>";
+  }).join("") + "</select></div>";
+}
+function loading(msg) { return '<div class="note">' + (msg || "Wird geladen …") + "</div>"; }
+function errBox() { return '<div class="card"><div class="note">Daten konnten nicht geladen werden. Bitte später erneut versuchen.</div></div>'; }
+function render() {
+  var my = ++token, v = window.__view;
+  viewsEl.innerHTML = leagueBar() + loading();
+  var fn = {spiele: vSpiele, tabelle: vTabelle, scorer: vScorer, strafen: vStrafen, statistik: vStatistik}[v];
+  fn(function(html) { if (my === token) { viewsEl.innerHTML = leagueBar() + html; } }, my);
+}
+function rerenderKeep() { render(); }
+
+// ---------- Tabelle ----------
+function loadTabelle() { return getXml("tab" + league().id, "path=xml/tabelle.aspx&" + lg(league())).then(function(d) {
+  var po = parseInt(text(d, "TeamPlayoffCount"), 10) || 0;
+  return {po: po, rows: kids(d, "Mannschaft").map(function(m) { return {
+    rang: text(m, "Rang"), id: text(m, "TeamID"), team: text(m, "Team"), short: text(m, "TeamShort") || text(m, "Team"),
+    sp: text(m, "Spiele"), s: text(m, "Siege"), n: text(m, "Niederlagen"), r: text(m, "Remis"), tore: text(m, "Tore"),
+    diff: text(m, "Differenz"), pkt: text(m, "Punkte"), sa: num(text(m, "StrafenAnzahl")), sm: num(text(m, "Strafminuten"))
+  }; })};
+}); }
+function vTabelle(done) {
+  loadTabelle().then(function(t) {
+    if (!t.rows.length) return done('<div class="card"><div class="note">Keine Tabelle vorhanden.</div></div>');
+    var h = '<div class="card"><div class="tr head"><span class="rk">#</span><span class="nm">Team</span><span class="n">Sp</span><span class="n w">Tore</span><span class="n">Diff</span><span class="n">Pkt</span></div>';
+    t.rows.forEach(function(r, i) {
+      h += '<div class="tr' + (t.po && i === t.po ? " cut" : "") + '"><span class="rk">' + esc(r.rang) + '</span><span class="nm"><span>' + esc(r.short) + '</span></span><span class="n">' + esc(r.sp) +
+        '</span><span class="n w">' + esc(r.tore.replace(/\s/g, "")) + '</span><span class="n">' + esc(r.diff) + '</span><span class="n b">' + esc(r.pkt) + "</span></div>";
+    });
+    done(h + "</div>");
+  }).catch(function() { done(errBox()); });
+}
+
+// ---------- Scorer ----------
+window.scMore = function() { state.scAll = true; render(); };
+function vScorer(done) {
+  getXml("sc" + league().id, "path=xml/scorerliste.aspx&" + lg(league())).then(function(d) {
+    var all = kids(d, "Spieler");
+    if (!all.length) return done('<div class="card"><div class="note">Keine Scorer vorhanden.</div></div>');
+    var list = state.scAll ? all : all.slice(0, 10);
+    var h = '<div class="card"><h3>' + (state.scAll ? "Alle Scorer" : "Top 10 Scorer") + '</h3><div class="tr head"><span class="rk">#</span><span class="nm">Spieler</span><span class="n">Sp</span><span class="n">T</span><span class="n">A</span><span class="n">Pkt</span></div>';
+    list.forEach(function(p) {
+      var a = num(text(p, "totalass1")) + num(text(p, "totalass2"));
+      h += '<div class="tr"><span class="rk">' + esc(text(p, "platz")) + '</span><span class="nm"><span>' + esc(text(p, "nachname") + " " + text(p, "vorname")) + "</span><small>" + esc(text(p, "verein")) + '</small></span><span class="n">' + esc(text(p, "anzahlspiele")) +
+        '</span><span class="n">' + esc(text(p, "totaltore")) + '</span><span class="n">' + a + '</span><span class="n b">' + esc(text(p, "totalpkt")) + "</span></div>";
+    });
+    if (!state.scAll && all.length > 10) h += '<button class="more" onclick="scMore()">Mehr anzeigen (alle ' + all.length + ")</button>";
+    done(h + "</div>");
+  }).catch(function() { done(errBox()); });
+}
+
+// ---------- Strafen ----------
+window.togTeam = function(id) {
+  if (state.openTeams[id]) delete state.openTeams[id]; else state.openTeams[id] = true;
+  render();
+};
+window.strMore = function() { state.strafAll = true; render(); };
+function vStrafen(done, my) {
+  if (state.strSub === "game") return strafenPerGame(done, my);
+  var _d = done; done = function(h) { _d(subChips() + h); };
+  var l = league();
+  var openIds = Object.keys(state.openTeams);
+  Promise.all([loadTabelle(), getXml("sf" + l.id, "path=xml/strafenliste.aspx&" + lg(l))].concat(openIds.map(function(id) {
+    return getXml("sft" + id, "path=xml/strafenliste.aspx&id=" + id + "&typ=team" + (l.type === "liga" ? "&ligaid=" + l.id : "")).catch(function() { return null; });
+  }))).then(function(res) {
+    var t = res[0], pl = kids(res[1], "Spieler");
+    var rows = t.rows.slice().sort(function(a, b) { return b.sm - a.sm; });
+    var max = rows.length ? Math.max(1, rows[0].sm) : 1;
+    var h = '<div class="card"><h3>Strafminuten pro Team</h3><div class="hint">Tippe ein Team an für die Strafen pro Spieler.</div>';
+    rows.forEach(function(r, i) {
+      var open = !!state.openTeams[r.id];
+      h += '<div class="tr click" onclick="togTeam(\'' + esc(r.id) + '\')"><span class="rk">' + (i + 1) + '</span><span class="nm"><span>' + esc(r.short) + '</span><div class="barbg"><div class="barfg" style="width:' + Math.round(r.sm / max * 100) + '%"></div></div></span>' +
+        '<span class="n w b">' + r.sm + ' min</span><span class="n">' + (open ? "▲" : "▼") + "</span></div>";
+      if (open) {
+        var d = res[2 + openIds.indexOf(r.id)];
+        h += '<div class="sub">';
+        if (!d) h += '<div class="note">Nicht ladbar.</div>';
+        else {
+          var ps = kids(d, "Spieler");
+          if (!ps.length) h += '<div class="note">Keine Strafen.</div>';
+          else {
+            h += '<div class="tr head" style="padding-left:0"><span class="nm">Spieler</span><span class="n">Sp</span><span class="n w">Strafmin.</span></div>';
+            ps.forEach(function(p) { h += '<div class="tr"><span class="nm"><span>' + esc(text(p, "nachname") + " " + text(p, "vorname")) + '</span></span><span class="n">' + esc(text(p, "anzahlspiele")) + '</span><span class="n w b">' + esc(text(p, "totalstrafen")) + "</span></div>"; });
+          }
+        }
+        h += "</div>";
+      }
+    });
+    h += "</div>";
+    var list = state.strafAll ? pl : pl.slice(0, 10);
+    h += '<div class="card"><h3>' + (state.strafAll ? "Strafen aller Spieler" : "Top 10 Strafen Spieler") + '</h3><div class="tr head"><span class="rk">#</span><span class="nm">Spieler</span><span class="n">Sp</span><span class="n w">Min.</span></div>';
+    list.forEach(function(p) {
+      h += '<div class="tr"><span class="rk">' + esc(text(p, "platz")) + '</span><span class="nm"><span>' + esc(text(p, "nachname") + " " + text(p, "vorname")) + "</span><small>" + esc(text(p, "verein")) + '</small></span><span class="n">' + esc(text(p, "anzahlspiele")) + '</span><span class="n w b">' + esc(text(p, "totalstrafen")) + "</span></div>";
+    });
+    if (!state.strafAll && pl.length > 10) h += '<button class="more" onclick="strMore()">Mehr anzeigen (alle ' + pl.length + ")</button>";
+    done(h + "</div>");
+  }).catch(function() { done(errBox()); });
+}
+
+// ---------- Spiele ----------
+window.spFilt = function(f) { state.spFilter = f; state.spLimit = 30; render(); };
+window.spMore = function() { state.spLimit = (state.spLimit || 30) + 40; render(); };
+function loadSpielplan() { return getXml("sp" + league().id, "path=xml/spielplan.aspx&" + lg(league()) + "&list=all").then(function(d) {
+  return kids(d, "Spiel").map(function(s) {
+    var dt = text(s, "datum"), m = dt.match(/(\d+)\.(\d+)\.(\d+)\s+(\d+):(\d+)/);
+    return {nr: text(s, "spielnr"), heim: text(s, "heim"), gast: text(s, "gast"), datum: dt, ort: text(s, "spielort"),
+      ticker: text(s, "livetickeron") === "1", done: text(s, "gespielt") === "1", res: text(s, "resultat"),
+      ts: m ? new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5]).getTime() : 0,
+      day: m ? m[1] + "." + m[2] + "." + m[3] : "", time: m ? m[4] + ":" + m[5] : ""};
+  });
+}); }
+function vSpiele(done) {
+  Promise.all([loadSpielplan(), A.season()]).then(function(r) {
+    var all = r[0], season = r[1];
+    var upc = all.filter(function(g) { return !g.done; }).sort(function(a, b) { return a.ts - b.ts; });
+    var pl = all.filter(function(g) { return g.done; }).sort(function(a, b) { return b.ts - a.ts; });
+    if (!state.spFilter) state.spFilter = upc.length ? "up" : "done";
+    var list = state.spFilter === "up" ? upc : pl;
+    var lim = state.spLimit || 30;
+    var h = '<div class="chips"><button class="chip' + (state.spFilter === "up" ? " act" : "") + '" onclick="spFilt(\'up\')">Anstehend (' + upc.length + ')</button><button class="chip' + (state.spFilter === "done" ? " act" : "") + '" onclick="spFilt(\'done\')">Gespielt (' + pl.length + ")</button></div>";
+    if (!list.length) return done(h + '<div class="card"><div class="note">Keine Spiele.</div></div>');
+    h += '<div class="card">';
+    var lastDay = "";
+    list.slice(0, lim).forEach(function(g) {
+      if (g.day !== lastDay) { h += '<div class="gd">' + esc(g.day) + "</div>"; lastDay = g.day; }
+      var res = g.done ? esc(g.res || "–") : "–:–";
+      if (g.done && g.ticker && season) res = '<a class="rs" href="spiel.html?spielnr=' + encodeURIComponent(g.nr) + "&saisonid=" + encodeURIComponent(season) + '">' + res + "</a>";
+      else res = '<span class="rs">' + res + "</span>";
+      h += '<div class="gm"><span class="tm">' + esc(g.time) + '</span><span class="tt"><span>' + esc(g.heim) + "</span><span>" + esc(g.gast) + "</span></span>" + res + "</div>";
+    });
+    if (list.length > lim) h += '<button class="more" onclick="spMore()">Mehr anzeigen (' + (list.length - lim) + " weitere)</button>";
+    done(h + "</div>");
+  }).catch(function() { done(errBox()); });
+}
+
+// ---------- Statistik (Ueber-/Unterzahl aus den Matchblaettern) ----------
+function secs(t) { var m = String(t).match(/(\d+):(\d+)/); return m ? (+m[1]) * 60 + (+m[2]) : 0; }
+function analyzeGame(g) {
+  // g = {t:[[home,sec,player]], s:[[home,sec,dur,code]]}
+  var pens = [];
+  g.s.forEach(function(p) {
+    var c = String(p[3] || "").charAt(0).toUpperCase(), dur = p[2];
+    if (dur > 0 && (c === "A" || c === "B" || c === "C")) pens.push({h: p[0], st: p[1], en: p[1] + dur * 60, minor: dur <= 2 && c !== "C"});
+  });
+  var goals = g.t.slice().sort(function(a, b) { return a[1] - b[1]; });
+  var res = {h: {pp: 0, sh: 0, ppG: [], shGA: 0}, a: {pp: 0, sh: 0, ppG: [], shGA: 0}};
+  function short(side, t) { var n = 0; pens.forEach(function(p) { if (p.h === side && p.st < t && t < p.en) n++; }); return Math.min(n, 2); }
+  goals.forEach(function(go) {
+    var sc = go[0], op = !go[0], t = go[1];
+    var so = short(op, t), ss = short(sc, t);
+    if (so > ss) {
+      (sc ? res.h : res.a).ppG.push(go[2]);
+      (op ? res.h : res.a).shGA++;
+      var cand = pens.filter(function(p) { return p.h === op && p.minor && p.st < t && t < p.en; }).sort(function(a, b) { return a.en - b.en; })[0];
+      if (cand) cand.en = t;
+    }
+  });
+  var last = 0; goals.forEach(function(x) { last = Math.max(last, x[1]); }); pens.forEach(function(p) { last = Math.max(last, p.en); });
+  var endT = last <= 3600 ? 3600 : last;
+  var firstT = 0;
+  for (var t = firstT; t < endT; t++) {
+    var sh = short(true, t + 0.5), sa = short(false, t + 0.5);
+    if (sa > sh) res.h.pp++; else if (sh > sa) res.a.pp++;
+    if (sh > sa) res.h.sh++; else if (sa > sh) res.a.sh++;
+  }
+  return res;
+}
+function normCode(c) {
+  c = String(c || ""); var l = c.toLowerCase();
+  if (l.indexOf("bank") >= 0) return "B";
+  if (l.indexOf("kleine") === 0) return "A";
+  if (l.indexOf("grosse") === 0 || l.indexOf("gro\u00dfe") === 0) return "C";
+  if (l.indexOf("schwere") === 0) return "G";
+  if (l.indexOf("disziplinar") === 0) return "D";
+  if (l.indexOf("spieldauer") === 0) return "E";
+  if (l.indexOf("match") === 0) return "F";
+  if (l.indexOf("penalty") === 0) return "P";
+  if (/^[A-Za-z]\d?$/.test(c)) return c.charAt(0).toUpperCase();
+  return "?";
+}
+function parseMatch(doc) {
+  var t = kids(doc, "tor").map(function(x) { return [text(x, "torheim") === "1", secs(text(x, "torzeit")), (text(x, "torspielerNachname") + " " + text(x, "torspielerVorname")).trim() || text(x, "torspieler")]; });
+  var s = kids(doc, "strafe").map(function(x) { return [text(x, "strafeheim") === "1", secs(text(x, "strafezeit")), num(text(x, "strafendauer")), normCode(text(x, "strafencode")), (text(x, "strafespielerNachname") + " " + text(x, "strafespielerVorname")).trim() || text(x, "strafespieler")]; });
+  return {t: t, s: s};
+}
+var mb = {}; // mb[key] = Promise of parsed
+function getMatch(season, nr) {
+  var key = "mb2:" + season + ":" + nr;
+  if (mb[key]) return mb[key];
+  try { var c = localStorage.getItem(key); if (c) return (mb[key] = Promise.resolve(JSON.parse(c))); } catch (e) {}
+  var p = A.fetchXml(WORKER + "/?path=xml/matchblatt.aspx&spielnr=" + encodeURIComponent(nr) + "&saisonid=" + encodeURIComponent(season)).then(function(d) {
+    var r = parseMatch(d);
+    try { localStorage.setItem(key, JSON.stringify(r)); } catch (e) {}
+    return r;
+  });
+  mb[key] = p; p.catch(function() { delete mb[key]; });
+  return p;
+}
+var lgData = {}; // league index -> {when, games, matches}
+function loadLeagueMatches(idx, season, games, onProg) {
+  var c = lgData[idx];
+  if (c && Date.now() - c.when < 30 * 60 * 1000 && c.n === games.length) return Promise.resolve(c);
+  var out = {when: Date.now(), n: games.length, games: games, matches: {}, fail: 0};
+  var queue = games.slice(), done = 0, N = games.length;
+  function worker() {
+    var g = queue.shift();
+    if (!g) return Promise.resolve();
+    return getMatch(season, g.nr).then(function(m) { out.matches[g.nr] = m; }).catch(function() { out.fail++; })
+      .then(function() { done++; onProg(done, N); return worker(); });
+  }
+  var ws = []; for (var i = 0; i < 5; i++) ws.push(worker());
+  return Promise.all(ws).then(function() { lgData[idx] = out; return out; });
+}
+function computeStats(d) {
+  var teams = {};
+  function T(n) { return teams[n] || (teams[n] = {name: n, sp: 0, pp: 0, sh: 0, ppG: 0, shGA: 0, scorers: {}}); }
+  d.games.forEach(function(g) {
+    var m = d.matches[g.nr]; if (!m) return;
+    var r = analyzeGame(m), H = T(g.heim), G = T(g.gast);
+    H.sp++; G.sp++;
+    [[H, r.h], [G, r.a]].forEach(function(x) {
+      x[0].pp += x[1].pp; x[0].sh += x[1].sh; x[0].ppG += x[1].ppG.length; x[0].shGA += x[1].shGA;
+      x[1].ppG.forEach(function(n) { x[0].scorers[n] = (x[0].scorers[n] || 0) + 1; });
+    });
+  });
+  return {teams: Object.keys(teams).map(function(k) { return teams[k]; }), fail: d.fail, n: d.n};
+}
+window.stSubSet = function(s) { state.stSub = s; renderStatBody(); };
+window.stTog = function(i) { state.openTeams["s" + i] = !state.openTeams["s" + i]; renderStatBody(); };
+var curStats = null;
+function fmtMin(sec) { return (sec / 60).toFixed(1).replace(".0", ""); }
+function renderStatBody() {
+  var el = document.getElementById("statBody"); if (!el || !curStats) return;
+  var tm = curStats.teams.filter(function(x) { return x.sp > 0; });
+  var h = "";
+  if (state.stSub === "pp") {
+    tm.sort(function(a, b) { return b.ppG - a.ppG; });
+    var mx = Math.max(1, tm.length ? tm[0].ppG : 1);
+    h += '<div class="card"><h3>Tore in Überzahl</h3><div class="hint">Tippe ein Team an: die 5 besten Überzahl-Torschützen.</div><div class="tr head"><span class="rk">#</span><span class="nm">Team</span><span class="n w">Tore</span><span class="n"></span></div>';
+    tm.forEach(function(x, i) {
+      var open = !!state.openTeams["s" + i];
+      h += '<div class="tr click" onclick="stTog(' + i + ')"><span class="rk">' + (i + 1) + '</span><span class="nm"><span>' + esc(x.name) + '</span><div class="barbg"><div class="barfg" style="width:' + Math.round(x.ppG / mx * 100) + '%"></div></div></span><span class="n w b">' + x.ppG + '</span><span class="n">' + (open ? "▲" : "▼") + "</span></div>";
+      if (open) {
+        var sc = Object.keys(x.scorers).map(function(n) { return [n, x.scorers[n]]; }).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 5);
+        h += '<div class="sub">' + (sc.length ? sc.map(function(p, j) { return '<div class="tr"><span class="rk">' + (j + 1) + '</span><span class="nm"><span>' + esc(p[0]) + '</span></span><span class="n w b">' + p[1] + "</span></div>"; }).join("") : '<div class="note">Keine Überzahl-Tore.</div>') + "</div>";
+      }
+    });
+    h += "</div>";
+  } else if (state.stSub === "prod") {
+    tm.forEach(function(x) { x.rate = x.pp > 0 ? x.ppG / (x.pp / 600) : 0; });
+    tm.sort(function(a, b) { return b.rate - a.rate; });
+    h += '<div class="card"><h3>Produktivität Überzahl</h3><div class="hint">Tore pro 10 Minuten Überzahl. Min = Minuten in Überzahl.</div><div class="tr head"><span class="rk">#</span><span class="nm">Team</span><span class="n w">Min</span><span class="n">Tore</span><span class="n w">pro 10′</span></div>';
+    tm.forEach(function(x, i) {
+      h += '<div class="tr"><span class="rk">' + (i + 1) + '</span><span class="nm"><span>' + esc(x.name) + '</span></span><span class="n w">' + fmtMin(x.pp) + '</span><span class="n">' + x.ppG + '</span><span class="n w b">' + x.rate.toFixed(1) + "</span></div>";
+    });
+    h += "</div>";
+  } else {
+    tm.forEach(function(x) { x.per = x.shGA > 0 ? x.sh / 60 / x.shGA : Infinity; });
+    tm.sort(function(a, b) { return b.per - a.per; });
+    h += '<div class="card"><h3>Unterzahl</h3><div class="hint">Ø Minuten Unterzahl pro Gegentor – höher ist besser.</div><div class="tr head"><span class="rk">#</span><span class="nm">Team</span><span class="n w">Min</span><span class="n">GT</span><span class="n w">1 GT / Min</span></div>';
+    tm.forEach(function(x, i) {
+      h += '<div class="tr"><span class="rk">' + (i + 1) + '</span><span class="nm"><span>' + esc(x.name) + '</span></span><span class="n w">' + fmtMin(x.sh) + '</span><span class="n">' + x.shGA + '</span><span class="n w b">' + (x.per === Infinity ? "–" : x.per.toFixed(1)) + "</span></div>";
+    });
+    h += "</div>";
+  }
+  h += '<div class="note">Berechnet aus den Matchblättern der ' + curStats.n + " gespielten Spiele" + (curStats.fail ? " (" + curStats.fail + " nicht ladbar)" : "") + ". Überzahl ≈ kleine/grosse/Bankstrafen; Disziplinarstrafen zählen nicht; Näherungswerte.</div>";
+  el.innerHTML = h;
+  var tabs = document.querySelectorAll("#statTabs .chip");
+  Array.prototype.forEach.call(tabs, function(b) { b.classList.toggle("act", b.getAttribute("data-s") === state.stSub); });
+}
+function progUI(title, n) {
+  return '<div class="card"><h3>' + title + '</h3><div class="hint" id="progTxt">Spielberichte 0 / ' + n + '</div><div class="prog"><div id="progBar"></div></div></div>';
+}
+function progCb(my) {
+  return function(d, n) {
+    if (my !== token) return;
+    var t = document.getElementById("progTxt"), b = document.getElementById("progBar");
+    if (t) t.textContent = "Spielberichte " + d + " / " + n;
+    if (b) b.style.width = Math.round(d / n * 100) + "%";
+  };
+}
+function withMatches(done, my, title, cb) {
+  var l = league();
+  Promise.all([loadSpielplan(), A.season()]).then(function(r) {
+    var games = r[0].filter(function(g) { return g.done; });
+    if (!games.length) return done('<div class="card"><div class="note">Noch keine gespielten Spiele.</div></div>');
+    var c = lgData[state.league];
+    if (!(c && Date.now() - c.when < 30 * 60 * 1000 && c.n === games.length)) done(progUI(title, games.length));
+    loadLeagueMatches(state.league, r[1], games, progCb(my)).then(function(d) {
+      if (my !== token) return;
+      cb(d);
+    });
+  }).catch(function() { done(errBox()); });
+}
+function vStatistik(done, my) {
+  var head = '<div class="chips" id="statTabs"><button class="chip" data-s="pp" onclick="stSubSet(\'pp\')">\u00dcberzahl-Tore</button><button class="chip" data-s="prod" onclick="stSubSet(\'prod\')">Produktivit\u00e4t</button><button class="chip" data-s="sh" onclick="stSubSet(\'sh\')">Unterzahl</button></div><div id="statBody"></div>';
+  withMatches(done, my, "Statistik wird berechnet \u2026", function(d) {
+    curStats = computeStats(d); viewsEl.innerHTML = leagueBar() + head; renderStatBody();
+  });
+}
+
+// ---------- Strafen pro Spiel / Gegner ----------
+window.pgTeam = function(v) { state.pgTeam = v; render(); };
+function strafenPerGame(done, my) {
+  withMatches(function(h) { done(subChips() + h); }, my, "Strafen werden geladen \u2026", function(d) {
+    var names = {};
+    d.games.forEach(function(g) { names[g.heim] = 1; names[g.gast] = 1; });
+    var list = Object.keys(names).sort();
+    if (!state.pgTeam || !names[state.pgTeam]) state.pgTeam = list[0];
+    var team = state.pgTeam;
+    var h = subChips() + '<div class="vbar"><select onchange="pgTeam(this.value)">' + list.map(function(n) { return "<option" + (n === team ? " selected" : "") + ' value="' + esc(n) + '">' + esc(n) + "</option>"; }).join("") + "</select></div>";
+    var gs = d.games.filter(function(g) { return g.heim === team || g.gast === team; }).sort(function(a, b) { return b.ts - a.ts; });
+    var totN = 0, totM = 0, rows = "";
+    gs.forEach(function(g) {
+      var m = d.matches[g.nr]; if (!m) return;
+      var isH = g.heim === team, opp = isH ? g.gast : g.heim;
+      var mine = m.s.filter(function(p) { return p[0] === isH; });
+      var min = 0, pl = {};
+      mine.forEach(function(p) { min += p[2]; var n = p[4] || "?"; pl[n] = (pl[n] || 0) + 1; });
+      totN += mine.length; totM += min;
+      var top = Object.keys(pl).map(function(n) { return [n, pl[n]]; }).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 3);
+      rows += '<div class="gm" style="flex-wrap:wrap"><span class="tm">' + esc(g.day.slice(0, 5)) + '</span><span class="tt"><span>' + (isH ? "vs " : "@ ") + esc(opp) + '</span></span><span class="rs">' + mine.length + " Str. \u00b7 " + min + " min</span>" +
+        '<div style="flex-basis:100%;padding-left:52px;font-size:12px;color:var(--muted)">' + (top.length ? top.map(function(t) { return esc(t[0]) + (t[1] > 1 ? " (" + t[1] + "\u00d7)" : ""); }).join(" \u00b7 ") : "Keine Strafen") + "</div></div>";
+    });
+    h += '<div class="card"><h3>Strafen pro Spiel</h3><div class="hint">Insgesamt ' + totN + " Strafen, " + totM + " min in " + gs.length + ' Spielen. Darunter die bis zu 3 Spieler mit den meisten Strafen im Spiel. Alle Strafen z\u00e4hlen mit.</div>' + rows + "</div>";
+    done(h);
+  });
+}
+function subChips() {
+  return '<div class="chips"><button class="chip' + (state.strSub !== "game" ? " act" : "") + '" onclick="strSub(\'tab\')">Teams &amp; Spieler</button><button class="chip' + (state.strSub === "game" ? " act" : "") + '" onclick="strSub(\'game\')">Pro Spiel &amp; Gegner</button></div>';
+}
+window.strSub = function(v) { state.strSub = v; render(); };
+window.__stats = {analyzeGame: analyzeGame, parseMatch: parseMatch};
 })();
 </script>
 </body>
